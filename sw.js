@@ -1,3 +1,11 @@
-self.addEventListener("fetch", e=>{
-  e.respondWith(fetch(e.request));
-});
+const cacheName = "park-faaliyet-v1";
+const assets = [
+  "index.html",
+  "acilis.mp4",
+  "manifest.json",
+  "icon.png"
+];
+
+self.addEventListener("install",e=>{e.waitUntil(caches.open(cacheName).then(cache=>cache.addAll(assets)))});
+self.addEventListener("activate",e=>{e.waitUntil(self.clients.claim())});
+self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});
