@@ -21,7 +21,8 @@ section.active{display:block}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:140px}
 
-.card{background:#222;border-radius:10px;margin:10px 0;padding:10px}
+.card{background:#222;border-radius:10px;margin:10px 0;padding:10px;cursor:pointer;}
+.card img{max-width:100%;border-radius:8px;margin-top:5px;}
 .iconbar{display:flex;gap:15px;margin-top:6px;font-size:20px}
 
 #search{padding:8px;border-radius:8px;margin-bottom:10px}
@@ -29,7 +30,7 @@ textarea{height:140px}
 </head>
 <body>
 
-<video class="bg" autoplay muted loop>
+<video class="bg" autoplay muted loop id="bgvideo">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
@@ -48,7 +49,10 @@ textarea{height:140px}
 
 <section id="add">
 <h3>Yeni Kayıt</h3>
-<input type="file" id="img" accept="image/*">
+<label>Dosya 1</label>
+<input type="file" id="img1" accept="image/*">
+<label>Dosya 2</label>
+<input type="file" id="img2" accept="image/*">
 <input type="date" id="date">
 <textarea id="desc" placeholder="Açıklama"></textarea>
 <button onclick="save()">Kaydet</button>
@@ -75,6 +79,14 @@ if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}
 let data = JSON.parse(localStorage.getItem("data")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 
+let timer;
+function resetTimer(){
+  clearTimeout(timer);
+  timer=setTimeout(()=>{document.getElementById("bgvideo").play();},20000);
+}
+document.onclick=resetTimer;
+resetTimer();
+
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -82,16 +94,37 @@ render();
 }
 
 function save(){
-let r={date:date.value,desc:desc.value,img:""};
-let reader=new FileReader();
-reader.onload=e=>{
-r.img=e.target.result;
+if(!img1.files[0] && !img2.files[0]){alert("En az bir resim seç"); return;}
+let r={date:date.value,desc:desc.value,img1:"",img2:""};
+let reader1=new FileReader();
+reader1.onload=e=>{
+r.img1=e.target.result;
+if(img2.files[0]){
+let reader2=new FileReader();
+reader2.onload=e2=>{
+r.img2=e2.target.result;
+addRecord(r);
+};
+reader2.readAsDataURL(img2.files[0]);
+}else addRecord(r);
+};
+if(img1.files[0]) reader1.readAsDataURL(img1.files[0]);
+else if(img2.files[0]){
+let reader2=new FileReader();
+reader2.onload=e2=>{
+r.img2=e2.target.result;
+addRecord(r);
+};
+reader2.readAsDataURL(img2.files[0]);
+}
+
+function addRecord(r){
+let duplicate=data.find(d=>d.date===r.date && d.desc===r.desc);
+if(duplicate){alert("Aynı tarih ve açıklama zaten var!"); return;}
 data.push(r);
 localStorage.setItem("data",JSON.stringify(data));
-img.value="";desc.value="";
-render();show("home");
-};
-reader.readAsDataURL(img.files[0]);
+img1.value=""; img2.value=""; desc.value=""; date.value="";
+render(); show("home");
 }
 
 function render(){
@@ -102,15 +135,24 @@ data.sort((a,b)=> new Date(b.date)-new Date(a.date));
 data.filter(x=> (x.date+x.desc).toLowerCase().includes(q))
 .forEach((r,i)=>{
 list.innerHTML+=`
-<div class="card">
+<div class="card" onclick="view(${i})">
 <b>${r.date}</b><br>${r.desc}
 <div class="iconbar">
-<span onclick="edit(${i})">✏️</span>
-<span onclick="del(${i})">🗑️</span>
+<span onclick="event.stopPropagation();edit(${i})">✏️</span>
+<span onclick="event.stopPropagation();del(${i})">🗑️</span>
 </div>
 </div>`;
 });
 renderTrash();
+}
+
+function view(i){
+let r=data[i];
+let html=`<div class="card">`;
+if(r.img1) html+=`<img src="${r.img1}">`;
+if(r.img2) html+=`<img src="${r.img2}">`;
+html+=`<b>${r.date}</b><br>${r.desc}</div>`;
+let w=window.open(); w.document.write(html);
 }
 
 function del(i){
@@ -122,32 +164,21 @@ render();
 }
 
 function renderTrash(){
-trash.innerHTML="";
+trashDiv=document.getElementById("trash"); trashDiv.innerHTML="";
 trash.forEach((r,i)=>{
-trash.innerHTML+=`
+trashDiv.innerHTML+=`
 <div class="card">
 ${r.date} - ${r.desc}
 <div class="iconbar">
-<span onclick="restore(${i})">♻️</span>
-<span onclick="perma(${i})">❌</span>
+<span onclick="event.stopPropagation();restore(${i})">♻️</span>
+<span onclick="event.stopPropagation();perma(${i})">❌</span>
 </div>
 </div>`;
 });
 }
 
-function restore(i){
-data.push(trash[i]);
-trash.splice(i,1);
-localStorage.setItem("data",JSON.stringify(data));
-localStorage.setItem("trash",JSON.stringify(trash));
-render();
-}
-
-function perma(i){
-trash.splice(i,1);
-localStorage.setItem("trash",JSON.stringify(trash));
-render();
-}
+function restore(i){data.push(trash[i]); trash.splice(i,1); localStorage.setItem("data",JSON.stringify(data)); localStorage.setItem("trash",JSON.stringify(trash)); render();}
+function perma(i){trash.splice(i,1); localStorage.setItem("trash",JSON.stringify(trash)); render();}
 
 async function exportZip(){
 let zip=new JSZip();
@@ -169,7 +200,6 @@ render();
 }
 
 function edit(i){alert("Düzenleme sonra eklenir");}
-
 render();
 </script>
 </body>
