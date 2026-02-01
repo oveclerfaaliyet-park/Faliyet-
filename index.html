@@ -13,7 +13,7 @@ object-fit:cover;z-index:-2;opacity:.4
 }
 #screensaver{
 position:fixed;top:0;left:0;width:100%;height:100%;
-background:black;z-index:5;display:none
+background:black;z-index:10;display:none
 }
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
@@ -23,9 +23,6 @@ nav button{padding:10px 20px;font-size:16px}
 
 section{display:none;padding:15px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
-
-#add{background:url(bg_add.jpg) center/cover}
-#settings{background:url(bg_settings.jpg) center/cover}
 
 input,textarea,button{width:100%;margin:8px 0;padding:12px;font-size:16px}
 textarea{height:160px}
@@ -43,12 +40,12 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 <body>
 
 <video class="bg" autoplay muted loop>
-<source src="video.mp4" type="video/mp4">
+<source src="acilis.mp4" type="video/mp4">
 </video>
 
 <div id="screensaver">
 <video autoplay muted loop>
-<source src="video.mp4" type="video/mp4">
+<source src="acilis.mp4" type="video/mp4">
 </video>
 </div>
 
@@ -74,17 +71,15 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 <section id="detail"></section>
 
 <section id="settings">
-<h3>Dışa Aktar</h3>
+<h3>Yedek</h3>
 <input type="date" id="s1">
 <input type="date" id="s2">
-<button onclick="exportZip()">ZIP Oluştur</button>
-
-<h3>İçe Aktar</h3>
+<button onclick="exportZip()">ZIP Dışa Aktar</button>
 <input type="file" id="zipInput">
-<button onclick="importZip()">ZIP Yükle</button>
+<button onclick="importZip()">ZIP İçe Aktar</button>
 
 <h3>Çöp Kutusu</h3>
-<button onclick="showTrash()">Çöp Kutusunu Göster</button>
+<button onclick="showTrash()">Çöp Kutusunu Aç</button>
 <div id="trash"></div>
 </section>
 
@@ -92,12 +87,13 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 <script>
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
+let lastSave=0;
 let idleTimer;
 
 function resetIdle(){
 clearTimeout(idleTimer);
 screensaver.style.display="none";
-idleTimer=setTimeout(()=>screensaver.style.display="block",30000);
+idleTimer=setTimeout(()=>screensaver.style.display="block",20000);
 }
 document.onclick=resetIdle;resetIdle();
 
@@ -108,7 +104,14 @@ if(id=="home") render();
 }
 
 function save(){
+if(Date.now()-lastSave<2000)return;
+lastSave=Date.now();
+
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
+
+let exists=data.find(x=>x.date==r.date && x.desc==r.desc);
+if(exists){alert("Bu kayıt zaten var");return;}
+
 [img1,img2].forEach(f=>{
 if(f.files[0]){
 let reader=new FileReader();
@@ -117,6 +120,7 @@ r.imgs.push(e.target.result);
 if(r.imgs.length>=1){
 data.push(r);
 localStorage.setItem("records",JSON.stringify(data));
+img1.value="";img2.value="";desc.value="";
 alert("Kaydedildi");
 }
 };
@@ -131,14 +135,18 @@ data.forEach((r,i)=>{
 let c=document.createElement("div");
 c.className="card";
 c.innerHTML=`<img src="${r.imgs[0]}">
-<div><b>${r.date}</b><br>${r.desc}<br>
-<button onclick="del(${i})">Sil</button></div>`;
+<div>
+<b>${r.date}</b><br>${r.desc}<br>
+<button onclick="edit(${i})">Düzelt</button>
+<button onclick="del(${i})">Sil</button>
+</div>`;
 c.onclick=()=>openDetail(i);
 home.appendChild(c);
 });
 }
 
 function del(i){
+if(!confirm("Silmek istediğine emin misin?"))return;
 trash.push({...data[i],deleted:Date.now()});
 data.splice(i,1);
 localStorage.setItem("records",JSON.stringify(data));
@@ -147,13 +155,13 @@ render();
 }
 
 function showTrash(){
-trash = trash.filter(t=>Date.now()-t.deleted<864000000);
-localStorage.setItem("trash",JSON.stringify(trash));
-trashDiv=trash.map((t,i)=>
-`<div>${t.date} - ${t.desc}
-<button onclick="restore(${i})">Geri Al</button>
-<button onclick="perma(${i})">Sil</button></div>`).join("");
-document.getElementById("trash").innerHTML=trashDiv;
+let html="";
+trash.forEach((t,i)=>{
+html+=`<div>${t.date} - ${t.desc}
+<button onclick="restore(${i})">Geri Yükle</button>
+<button onclick="perma(${i})">Sil</button></div>`;
+});
+document.getElementById("trash").innerHTML=html;
 }
 
 function restore(i){
