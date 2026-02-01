@@ -6,20 +6,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 *{box-sizing:border-box;font-family:Arial}
-body{margin:0;overflow-x:hidden;background:#000;color:#fff}
+body{margin:0;overflow:hidden;background:#000;color:#fff}
 video.bg{
 position:fixed;top:0;left:0;width:100%;height:100%;
-object-fit:cover;z-index:-1;opacity:.4
+object-fit:cover;z-index:-2;opacity:.4
 }
+#screensaver{
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:black;z-index:5;display:none
+}
+#screensaver video{width:100%;height:100%;object-fit:cover}
+
 header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
 nav{display:flex;justify-content:space-around;background:#111;padding:10px}
 nav button{padding:10px 20px;font-size:16px}
 
-section{display:none;padding:15px}
+section{display:none;padding:15px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
 
+#add{background:url(bg_add.jpg) center/cover}
+#settings{background:url(bg_settings.jpg) center/cover}
+
 input,textarea,button{width:100%;margin:8px 0;padding:12px;font-size:16px}
-textarea{height:120px}
+textarea{height:160px}
 
 .card{
 display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
@@ -29,7 +38,6 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 
 #detail img{width:100%;margin-top:50px}
 #detail .text{padding:10px;font-size:18px}
-
 </style>
 </head>
 <body>
@@ -38,11 +46,17 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 <source src="video.mp4" type="video/mp4">
 </video>
 
+<div id="screensaver">
+<video autoplay muted loop>
+<source src="video.mp4" type="video/mp4">
+</video>
+</div>
+
 <header>PARK FAALİYET</header>
 
 <nav>
 <button onclick="show('home')">Ana</button>
-<button onclick="show('add')">Yeni Kayıt</button>
+<button onclick="show('add')">Yeni</button>
 <button onclick="show('settings')">Ayarlar</button>
 </nav>
 
@@ -68,12 +82,24 @@ display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
 <h3>İçe Aktar</h3>
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP Yükle</button>
+
+<h3>Çöp Kutusu</h3>
+<button onclick="showTrash()">Çöp Kutusunu Göster</button>
+<div id="trash"></div>
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-
 <script>
 let data = JSON.parse(localStorage.getItem("records")||"[]");
+let trash = JSON.parse(localStorage.getItem("trash")||"[]");
+let idleTimer;
+
+function resetIdle(){
+clearTimeout(idleTimer);
+screensaver.style.display="none";
+idleTimer=setTimeout(()=>screensaver.style.display="block",30000);
+}
+document.onclick=resetIdle;resetIdle();
 
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
@@ -82,11 +108,7 @@ if(id=="home") render();
 }
 
 function save(){
-let r = {
-date: date.value,
-desc: desc.value,
-imgs: []
-};
+let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
 [img1,img2].forEach(f=>{
 if(f.files[0]){
 let reader=new FileReader();
@@ -108,10 +130,44 @@ home.innerHTML="";
 data.forEach((r,i)=>{
 let c=document.createElement("div");
 c.className="card";
-c.innerHTML=`<img src="${r.imgs[0]}"><div><b>${r.date}</b><br>${r.desc}</div>`;
+c.innerHTML=`<img src="${r.imgs[0]}">
+<div><b>${r.date}</b><br>${r.desc}<br>
+<button onclick="del(${i})">Sil</button></div>`;
 c.onclick=()=>openDetail(i);
 home.appendChild(c);
 });
+}
+
+function del(i){
+trash.push({...data[i],deleted:Date.now()});
+data.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
+render();
+}
+
+function showTrash(){
+trash = trash.filter(t=>Date.now()-t.deleted<864000000);
+localStorage.setItem("trash",JSON.stringify(trash));
+trashDiv=trash.map((t,i)=>
+`<div>${t.date} - ${t.desc}
+<button onclick="restore(${i})">Geri Al</button>
+<button onclick="perma(${i})">Sil</button></div>`).join("");
+document.getElementById("trash").innerHTML=trashDiv;
+}
+
+function restore(i){
+data.push(trash[i]);
+trash.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
+}
+
+function perma(i){
+trash.splice(i,1);
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
 }
 
 function openDetail(i){
@@ -124,16 +180,14 @@ show("detail");
 }
 
 async function exportZip(){
-let s=s1.value, e=s2.value;
+let s=s1.value,e=s2.value;
 let zip=new JSZip();
-data.filter(r=>r.date>=s&&r.date<=e).forEach((r,i)=>{
-zip.file(`kayıt${i}.json`,JSON.stringify(r));
-});
+data.filter(r=>r.date>=s&&r.date<=e)
+.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
 let blob=await zip.generateAsync({type:"blob"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download=`${s}_${e}.zip`;
-a.click();
+a.download=`${s}_${e}.zip`;a.click();
 }
 
 async function importZip(){
