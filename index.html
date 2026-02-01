@@ -27,28 +27,31 @@ background:black;z-index:10;display:none
 
 header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
 nav{display:flex;justify-content:space-around;background:#111;padding:10px}
-nav button{padding:10px 20px;font-size:16px}
+nav button{padding:10px 15px;font-size:16px}
 
-section{display:none;padding:15px;height:calc(100vh - 120px);overflow:auto}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
 
 label{font-size:14px;opacity:.8}
 
-input,textarea,button{width:100%;margin:8px 0;padding:12px;font-size:16px}
-textarea{height:160px}
+input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
+textarea{height:200px}
 
 .card{
-display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
+display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;
+cursor:pointer;
 }
-.card img{width:120px;height:120px;object-fit:cover}
-.card div{padding:10px}
+.card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
+.card div{padding:10px;flex:1;position:relative}
 
 .iconbar{
 display:flex;
 gap:15px;
 margin-top:10px;
-font-size:22px;
+font-size:20px;
 justify-content:flex-end;
+position:absolute;
+top:10px;right:10px;
 }
 
 .iconbar span{
@@ -60,34 +63,22 @@ display:flex;
 justify-content:space-between;
 align-items:center;
 background:#222;
-margin:8px 0;
-padding:10px;
+margin:6px 0;
+padding:8px;
 border-radius:8px;
 }
 
 .trashIcons span{
 font-size:20px;
-margin-left:15px;
+margin-left:10px;
 cursor:pointer;
 }
 
-#detail img{width:100%;margin-top:50px}
-#detail .text{padding:10px;font-size:18px}
+#detail{padding:10px;background:#fff;color:#000;}
+#detail img{width:48%;margin-top:25px;margin-right:1%;}
+#detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
-/* Arama çubuğu sabit ve panelle arası yarı yarıya */
-#searchBar{
-position:sticky;
-top:60px;
-background:#111;
-padding:5px;
-z-index:5;
-}
-
-#searchBar input{
-width:100%;
-padding:8px;
-font-size:16px;
-}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 </style>
 </head>
 <body>
@@ -111,7 +102,7 @@ font-size:16px;
 </nav>
 
 <section id="home" class="active">
-<div id="searchBar"><input type="text" placeholder="Ara..." oninput="filterRecords(this.value)"></div>
+<input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">
 </section>
 
 <section id="add">
@@ -120,26 +111,20 @@ font-size:16px;
 <input type="date" id="date">
 <input type="file" id="img1" accept="image/*">
 <input type="file" id="img2" accept="image/*">
-<label>Açıklama</label>
 <textarea id="desc" placeholder="Açıklama"></textarea>
-<button onclick="save()">Kaydet</button>
+<button id="saveBtn" onclick="save()">Kaydet</button>
 </section>
 
 <section id="detail"></section>
 
 <section id="settings">
 <h3>Yedek</h3>
-
+<div id="backupInfo" style="margin-bottom:10px;">Son yedekleme: -</div>
 <label>Başlangıç Tarihi</label>
 <input type="date" id="s1">
-
 <label>Bitiş Tarihi</label>
 <input type="date" id="s2">
-
-<div id="lastBackup" style="margin:10px 0;font-size:14px"></div>
-
 <button onclick="exportZip()">ZIP Dışa Aktar</button>
-
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP İçe Aktar</button>
 
@@ -168,41 +153,50 @@ document.getElementById(id).classList.add("active");
 if(id=="home") render();
 }
 
+function formatDate(trDate){
+let d=new Date(trDate);
+return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
+}
+
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
 
-if(!date.value){alert("Tarih seçiniz");return;}
-if(!desc.value){alert("Açıklama giriniz");return;}
+let btn=document.getElementById("saveBtn");
+btn.disabled=true; // çift kayıt engelleme
 
+if(!date.value){alert("Tarih seçiniz"); btn.disabled=false; return;}
+if(!desc.value){alert("Açıklama giriniz"); btn.disabled=false; return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
 
-if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
+if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var"); btn.disabled=false; return;}
 
-let files=[img1,img2].filter(f=>f.files[0]);
-if(files.length===0){
+let files=[img1,img2],loaded=0;
+let realFiles=files.filter(f=>f.files[0]);
+if(realFiles.length===0){
 data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 img1.value=""; img2.value=""; desc.value=""; date.value="";
 updateBackupInfo();
 render();
+btn.disabled=false;
 return;
 }
 
-let loaded=0;
-files.forEach(f=>{
+realFiles.forEach(f=>{
 let reader=new FileReader();
 reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
-if(loaded===files.length){
+if(loaded===realFiles.length){
 data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 img1.value=""; img2.value=""; desc.value=""; date.value="";
 updateBackupInfo();
 render();
+btn.disabled=false;
 }
 };
 reader.readAsDataURL(f.files[0]);
@@ -211,37 +205,31 @@ reader.readAsDataURL(f.files[0]);
 
 function updateBackupInfo(){
 let now=new Date();
-lastBackup.innerText="Son yedekleme: "+now.toLocaleDateString("tr-TR")+" "+now.toLocaleTimeString("tr-TR");
+document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
 }
 
-function render(filter=""){
-home.innerHTML="";
-home.appendChild(document.getElementById("searchBar")); // sabit arama kutusu
-data.filter(r=>r.desc.toLowerCase().includes(filter.toLowerCase()))
-.forEach((r,i)=>{
+function render(){
+home.innerHTML=`<input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">`;
+data.forEach((r,i)=>{
 let c=document.createElement("div");
 c.className="card";
-let imgHtml=r.imgs.length>0?`<img src="${r.imgs[0]}">`:"";
-c.innerHTML=`${imgHtml}
+c.innerHTML=`<img src="${r.imgs[0]||''}">
 <div>
-<b>${formatDateTR(r.date)}</b><br>${r.desc}
+<b>${formatDate(r.date)}</b><br>${r.desc}
 <div class="iconbar">
-  <span onclick="edit(${i})">✏️</span>
-  <span onclick="delRec(${i})">🗑️</span>
+<span onclick="edit(${i})">✏️</span>
+<span onclick="delRec(${i})">🗑️</span>
 </div>
 </div>`;
-c.onclick=()=>openDetail(i);
+c.onclick=(e)=>{if(!e.target.closest('.iconbar')) openDetail(i)};
 home.appendChild(c);
 });
 }
 
-function formatDateTR(d){
-let dt=new Date(d);
-return dt.toLocaleDateString("tr-TR");
-}
-
-function filterRecords(val){
-render(val);
+function filter(text){
+home.querySelectorAll(".card").forEach(c=>{
+c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
+});
 }
 
 function delRec(i){
@@ -258,10 +246,10 @@ let html="";
 trash.forEach((t,i)=>{
 html+=`
 <div class="trashItem">
-<div>${formatDateTR(t.date)}<br>${t.desc}</div>
+<div>${formatDate(t.date)}<br>${t.desc}</div>
 <div class="trashIcons">
-  <span onclick="restore(${i})">♻️</span>
-  <span onclick="perma(${i})">🗑️</span>
+<span onclick="restore(${i})">♻️</span>
+<span onclick="perma(${i})">🗑️</span>
 </div>
 </div>`;
 });
@@ -286,13 +274,27 @@ showTrash();
 
 function openDetail(i){
 let r=data[i];
-let imgsHtml=r.imgs.map(src=>`<img src="${src}" style="width:49%;margin-right:2%">`).join("");
-detail.innerHTML=`
-<div style="background:#fff;padding:10px;border-radius:8px">
-${imgsHtml}
-<div class="text">${formatDateTR(r.date)}<br>${r.desc}</div>
-<button onclick="show('home')">Geri</button>
-</div>`;
+detail.innerHTML="";
+detail.style.background="#fff";
+document.querySelector(".bg").style.display="none";
+r.imgs.forEach(img=>{
+let im=document.createElement("img");
+im.src=img;
+im.style.marginRight="1%";
+detail.appendChild(im);
+});
+let txt=document.createElement("div");
+txt.className="text";
+txt.style.marginTop="5px";
+txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
+detail.appendChild(txt);
+let btn=document.createElement("button");
+btn.innerText="Geri";
+btn.onclick=()=>{
+show('home');
+document.querySelector(".bg").style.display="block";
+};
+detail.appendChild(btn);
 show("detail");
 }
 
@@ -314,9 +316,11 @@ for(let f in zip.files){
 let txt=await zip.files[f].async("string");
 data.push(JSON.parse(txt));
 }
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 alert("Yüklendi");
 render();
+updateBackupInfo();
 }
 
 function edit(i){
