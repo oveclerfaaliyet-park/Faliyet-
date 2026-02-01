@@ -1,32 +1,37 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
 <title>Yeni Kayıt</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Yeni Kayıt</h1>
-<form id="kayitForm">
-  <label>Tarih</label>
-  <input type="date" id="tarihInput" required>
 
-  <label>Konu</label>
-  <textarea id="konuInput" rows="5" placeholder="Konu girin..." required></textarea>
+<h2>Yeni Kayıt</h2>
 
-  <label>Resim Ekle</label>
-  <input type="file" id="resimInput" accept="image/*" multiple>
+<input type="file" id="resim1"><br><br>
+<input type="file" id="resim2"><br><br>
 
-  <button type="submit">Kaydet</button>
-</form>
+<input type="date" id="tarih"><br><br>
 
-<script src="app.js"></script>
+<textarea id="aciklama" placeholder="Açıklama"></textarea><br><br>
+
+<button onclick="kaydet()">Kaydet</button>
+<button onclick="location.href='index.html'">Geri</button>
+
 <script>
-document.getElementById("kayitForm").addEventListener("submit", (e) => {
-  e.preventDefault();
-  kayitEkle();
-});
+function kaydet(){
+  let data = JSON.parse(localStorage.getItem("kayitlar") || "[]");
+
+  data.push({
+    tarih: tarih.value,
+    aciklama: aciklama.value
+  });
+
+  localStorage.setItem("kayitlar", JSON.stringify(data));
+  alert("Kaydedildi");
+  location.href="index.html";
+}
 </script>
 </body>
 </html>
