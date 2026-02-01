@@ -41,7 +41,7 @@ textarea{height:200px}
 display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;
 cursor:pointer;
 }
-.card img{width:120px;height:120px;object-fit:cover}
+.card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
 .card div{padding:10px;flex:1;position:relative}
 
 .iconbar{
@@ -74,11 +74,11 @@ margin-left:10px;
 cursor:pointer;
 }
 
-#detail img{width:48%;margin-top:50px;margin-right:2%;}
-#detail .text{padding:10px;font-size:18px;margin-top:10px;}
+#detail{padding:10px;background:#fff;color:#000;}
+#detail img{width:48%;margin-top:25px;margin-right:1%;}
+#detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
-#searchBox{margin:5px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
-
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 </style>
 </head>
 <body>
@@ -107,6 +107,7 @@ cursor:pointer;
 
 <section id="add">
 <h3>Yeni Kayıt</h3>
+<label>Tarih</label>
 <input type="date" id="date">
 <input type="file" id="img1" accept="image/*">
 <input type="file" id="img2" accept="image/*">
@@ -118,6 +119,7 @@ cursor:pointer;
 
 <section id="settings">
 <h3>Yedek</h3>
+<div id="backupInfo" style="margin-bottom:10px;">Son yedekleme: -</div>
 <label>Başlangıç Tarihi</label>
 <input type="date" id="s1">
 <label>Bitiş Tarihi</label>
@@ -178,6 +180,7 @@ data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 img1.value="";img2.value="";desc.value="";date.value="";
+updateBackupInfo();
 render();
 }
 };
@@ -189,8 +192,14 @@ data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 desc.value="";date.value="";
+updateBackupInfo();
 render();
 }
+}
+
+function updateBackupInfo(){
+let now=new Date();
+document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
 }
 
 function render(){
@@ -259,18 +268,25 @@ showTrash();
 function openDetail(i){
 let r=data[i];
 detail.innerHTML="";
+detail.style.background="#fff";
+document.querySelector(".bg").style.display="none";
 r.imgs.forEach(img=>{
 let im=document.createElement("img");
 im.src=img;
+im.style.marginRight="1%";
 detail.appendChild(im);
 });
 let txt=document.createElement("div");
 txt.className="text";
+txt.style.marginTop="5px";
 txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
 detail.appendChild(txt);
 let btn=document.createElement("button");
 btn.innerText="Geri";
-btn.onclick=()=>show('home');
+btn.onclick=()=>{
+show('home');
+document.querySelector(".bg").style.display="block";
+};
 detail.appendChild(btn);
 show("detail");
 }
@@ -297,6 +313,7 @@ data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 alert("Yüklendi");
 render();
+updateBackupInfo();
 }
 
 function edit(i){
