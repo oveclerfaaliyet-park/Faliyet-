@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Faaliyet</title>
+<link rel="stylesheet" href="style.css">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+  <header>
+    <h1>Park Faaliyet</h1>
+    <button onclick="menuAc()">☰ Menü</button>
+  </header>
+
+  <!-- Menü -->
+  <div id="anaMenu" class="menu">
+    <button onclick="menuKapat()">✖ Kapat</button>
+    <button onclick="sayfaGec('kayit')">Yeni Kayıt</button>
+    <button onclick="sayfaGec('ayarlar')">Ayarlar</button>
+    <button onclick="sayfaGec('anasayfa')">Ana Sayfa</button>
+  </div>
+
+  <!-- Ana ekran: kayıtlar -->
+  <div id="anasayfaDiv">
+    <input type="text" id="aramaInput" placeholder="Ara (tarih/konu)" oninput="filitrele()">
+    <div id="kartContainer"></div>
+  </div>
+
+  <!-- Kayıt ekranı -->
+  <div id="kayitDiv" style="display:none">
+    <h2>Yeni Kayıt</h2>
+    <label>Tarih:</label>
+    <input type="date" id="kayitTarih"><br>
+    <label>Konu:</label>
+    <textarea id="kayitKonu" rows="4"></textarea><br>
+    <label>Resim:</label>
+    <input type="file" id="kayitResim" multiple accept="image/*"><br>
+    <button onclick="kayitEkle()">Kaydet</button>
+  </div>
+
+  <!-- Ayarlar ekranı -->
+  <div id="ayarlarDiv" style="display:none">
+    <h2>Ayarlar</h2>
+    <p id="sonGuncelleme"></p>
+    <button onclick="disarAktar()">Dışa Aktar</button>
+    <button onclick="iceriAl()">İçe Aktar</button>
+  </div>
+
+<script src="app.js"></script>
+</body>
+</html>
