@@ -54,9 +54,7 @@ position:absolute;
 top:10px;right:10px;
 }
 
-.iconbar span{
-cursor:pointer;
-}
+.iconbar span{cursor:pointer;}
 
 .trashItem{
 display:flex;
@@ -112,7 +110,7 @@ cursor:pointer;
 <input type="file" id="img1" accept="image/*">
 <input type="file" id="img2" accept="image/*">
 <textarea id="desc" placeholder="Açıklama"></textarea>
-<button id="saveBtn" onclick="save()">Kaydet</button>
+<button onclick="save()">Kaydet</button>
 </section>
 
 <section id="detail"></section>
@@ -128,12 +126,16 @@ cursor:pointer;
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP İçe Aktar</button>
 
+<h3>PDF Çıktı</h3>
+<button onclick="exportPDF()">PDF İndir</button>
+
 <h3>Çöp Kutusu</h3>
 <button onclick="showTrash()">Çöp Kutusunu Aç</button>
 <div id="trash"></div>
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
@@ -162,45 +164,39 @@ function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
 
-let btn=document.getElementById("saveBtn");
-btn.disabled=true; // çift kayıt engelleme
-
-if(!date.value){alert("Tarih seçiniz"); btn.disabled=false; return;}
-if(!desc.value){alert("Açıklama giriniz"); btn.disabled=false; return;}
+if(!date.value){alert("Tarih seçiniz");return;}
+if(!desc.value){alert("Açıklama giriniz");return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
 
-if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var"); btn.disabled=false; return;}
+if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
 
 let files=[img1,img2],loaded=0;
-let realFiles=files.filter(f=>f.files[0]);
-if(realFiles.length===0){
-data.push(r);
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-img1.value=""; img2.value=""; desc.value=""; date.value="";
-updateBackupInfo();
-render();
-btn.disabled=false;
-return;
-}
-
-realFiles.forEach(f=>{
+files.forEach(f=>{
+if(f.files[0]){
 let reader=new FileReader();
 reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
-if(loaded===realFiles.length){
+if(loaded===files.filter(f=>f.files[0]).length){
 data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
-img1.value=""; img2.value=""; desc.value=""; date.value="";
+img1.value="";img2.value="";desc.value="";date.value="";
 updateBackupInfo();
 render();
-btn.disabled=false;
 }
 };
 reader.readAsDataURL(f.files[0]);
+}
 });
+if(loaded===0){
+data.push(r);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+desc.value="";date.value="";
+updateBackupInfo();
+render();
+}
 }
 
 function updateBackupInfo(){
@@ -262,7 +258,6 @@ trash.splice(i,1);
 localStorage.setItem("records",JSON.stringify(data));
 localStorage.setItem("trash",JSON.stringify(trash));
 showTrash();
-render();
 }
 
 function perma(i){
@@ -325,6 +320,31 @@ updateBackupInfo();
 
 function edit(i){
 alert("Düzenleme fonksiyonu istersen sonra ekleriz 😄");
+}
+
+// PDF İndir
+async function exportPDF(){
+const { jsPDF } = window.jspdf;
+let s=s1.value,e=s2.value;
+let filtered=data.filter(r=>r.date>=s && r.date<=e);
+if(filtered.length===0){alert("Bu tarihler arasında kayıt yok"); return;}
+let doc = new jsPDF('p','mm','a4');
+let x=10,y=10,w=90,h=50;
+let col=0;
+for(let i=0;i<filtered.length;i++){
+let r=filtered[i];
+// resim ekle
+for(let j=0;j<r.imgs.length;j++){
+if(j>1) break;
+let img=r.imgs[j];
+doc.addImage(img,'JPEG',x + (col*95),y,w,h);
+}
+doc.text(formatDate(r.date)+'\n'+r.desc,x + (col*95),y+h+5);
+col++;
+if(col>1){col=0;y+=h+20;}
+if(y>270){doc.addPage();y=10;}
+}
+doc.save(`faaliyet_${s}_${e}.pdf`);
 }
 
 render();
