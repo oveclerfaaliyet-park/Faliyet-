@@ -1,22 +1,26 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html>
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
 <title>Ayarlar</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<h1>Ayarlar</h1>
-<p id="sonGuncelleme">Son güncelleme: -</p>
-<button onclick="disarAktar()">Dışa Aktar (PC’ye)</button>
-<button onclick="iceriAl()">İçe Al (Telefon’dan)</button>
 
-<script src="app.js"></script>
+<h2>Ayarlar</h2>
+
+<button onclick="disariAktar()">Verileri Dışa Aktar</button>
+<button onclick="location.href='index.html'">Geri</button>
+
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  sonGuncellemeGoster();
-});
+function disariAktar(){
+  let data = localStorage.getItem("kayitlar") || "[]";
+  let blob = new Blob([data], {type:"application/json"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "parkfaaliyet.json";
+  a.click();
+}
 </script>
 </body>
 </html>
