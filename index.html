@@ -1,29 +1,40 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Park Faaliyet</title>
-
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
-
+  <meta charset="UTF-8">
+  <title>Park Faaliyet</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
 </head>
 <body>
 
 <video id="bgVideo" autoplay muted loop>
-  <source src="acilis.mp4" type="video/mp4">
+  <source src="bg.mp4" type="video/mp4">
 </video>
 
 <div id="app">
 
-  <h1>Park Faaliyet</h1>
+  <header>
+    <h1>Park Faaliyet</h1>
+    <button onclick="openAdd()">+ Yeni Kayıt</button>
+    <button onclick="exportZip()">Dışa Aktar</button>
+  </header>
 
-  <button onclick="location.href='kayit.html'">Yeni Kayıt</button>
-  <button onclick="location.href='ayarlar.html'">Ayarlar</button>
+  <div id="list"></div>
 
-  <div id="liste"></div>
+</div>
 
+<div id="addModal" class="modal">
+  <div class="modalContent">
+    <h2>Yeni Kayıt</h2>
+    <input type="file" id="img1" accept="image/*">
+    <input type="file" id="img2" accept="image/*">
+    <input type="date" id="date">
+    <textarea id="desc" placeholder="Açıklama"></textarea>
+    <button onclick="saveRecord()">Kaydet</button>
+    <button onclick="closeAdd()">Kapat</button>
+  </div>
 </div>
 
 <script src="app.js"></script>
