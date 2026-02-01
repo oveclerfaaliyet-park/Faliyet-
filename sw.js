@@ -1,11 +1,36 @@
-const cacheName = "park-faaliyet-v1";
-const assets = [
-  "index.html",
-  "acilis.mp4",
-  "manifest.json",
-  "icon.png"
+const CACHE_NAME = "faaliyet-cache-v1";
+const urlsToCache = [
+  "./",
+  "./index.html",
+  "./manifest.json",
+  "./acilis.mp4",
+  "https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"
 ];
 
-self.addEventListener("install",e=>{e.waitUntil(caches.open(cacheName).then(cache=>cache.addAll(assets)))});
-self.addEventListener("activate",e=>{e.waitUntil(self.clients.claim())});
-self.addEventListener("fetch",e=>{e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)))});
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => {
+      return cache.addAll(urlsToCache);
+    })
+  );
+  self.skipWaiting();
+});
+
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys => {
+      return Promise.all(
+        keys.filter(key => key !== CACHE_NAME)
+            .map(key => caches.delete(key))
+      );
+    })
+  );
+});
+
+self.addEventListener("fetch", event => {
+  event.respondWith(
+    caches.match(event.request).then(resp => {
+      return resp || fetch(event.request);
+    })
+  );
+});
