@@ -4,49 +4,33 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Park Faaliyet</title>
-<link rel="stylesheet" href="style.css">
+
 <link rel="manifest" href="manifest.json">
+<link rel="stylesheet" href="style.css">
+
 </head>
 <body>
-  <header>
-    <h1>Park Faaliyet</h1>
-    <button onclick="menuAc()">☰ Menü</button>
-  </header>
 
-  <!-- Menü -->
-  <div id="anaMenu" class="menu">
-    <button onclick="menuKapat()">✖ Kapat</button>
-    <button onclick="sayfaGec('kayit')">Yeni Kayıt</button>
-    <button onclick="sayfaGec('ayarlar')">Ayarlar</button>
-    <button onclick="sayfaGec('anasayfa')">Ana Sayfa</button>
-  </div>
+<video id="bgVideo" autoplay muted loop>
+  <source src="acilis.mp4" type="video/mp4">
+</video>
 
-  <!-- Ana ekran: kayıtlar -->
-  <div id="anasayfaDiv">
-    <input type="text" id="aramaInput" placeholder="Ara (tarih/konu)" oninput="filitrele()">
-    <div id="kartContainer"></div>
-  </div>
+<div id="app">
 
-  <!-- Kayıt ekranı -->
-  <div id="kayitDiv" style="display:none">
-    <h2>Yeni Kayıt</h2>
-    <label>Tarih:</label>
-    <input type="date" id="kayitTarih"><br>
-    <label>Konu:</label>
-    <textarea id="kayitKonu" rows="4"></textarea><br>
-    <label>Resim:</label>
-    <input type="file" id="kayitResim" multiple accept="image/*"><br>
-    <button onclick="kayitEkle()">Kaydet</button>
-  </div>
+  <h1>Park Faaliyet</h1>
 
-  <!-- Ayarlar ekranı -->
-  <div id="ayarlarDiv" style="display:none">
-    <h2>Ayarlar</h2>
-    <p id="sonGuncelleme"></p>
-    <button onclick="disarAktar()">Dışa Aktar</button>
-    <button onclick="iceriAl()">İçe Aktar</button>
-  </div>
+  <button onclick="location.href='kayit.html'">Yeni Kayıt</button>
+  <button onclick="location.href='ayarlar.html'">Ayarlar</button>
+
+  <div id="liste"></div>
+
+</div>
 
 <script src="app.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+</script>
 </body>
 </html>
