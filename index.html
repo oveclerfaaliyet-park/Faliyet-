@@ -4,35 +4,89 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="manifest" href="manifest.json">
+<script>
+if("serviceWorker" in navigator){
+  navigator.serviceWorker.register("sw.js");
+}
+</script>
 
 <style>
 *{box-sizing:border-box;font-family:Arial}
-body{margin:0;background:#000;color:#fff;overflow:hidden}
-video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:.4;z-index:-1}
+body{margin:0;overflow:hidden;background:#000;color:#fff}
+video.bg{
+position:fixed;top:0;left:0;width:100%;height:100%;
+object-fit:cover;z-index:-2;opacity:.4
+}
+#screensaver{
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:black;z-index:10;display:none
+}
+#screensaver video{width:100%;height:100%;object-fit:cover}
 
-header{text-align:center;padding:10px;font-size:22px;font-weight:bold}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
 nav{display:flex;justify-content:space-around;background:#111;padding:10px}
-nav button{padding:8px 16px;font-size:16px}
+nav button{padding:10px 20px;font-size:16px}
 
 section{display:none;padding:15px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
 
-input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
-textarea{height:140px}
+label{font-size:14px;opacity:.8}
 
-.card{background:#222;border-radius:10px;margin:10px 0;padding:10px;cursor:pointer;}
-.card img{max-width:100%;border-radius:8px;margin-top:5px;}
-.iconbar{display:flex;gap:15px;margin-top:6px;font-size:20px}
+input,textarea,button{width:100%;margin:8px 0;padding:12px;font-size:16px}
+textarea{height:200px}
 
-#search{padding:8px;border-radius:8px;margin-bottom:10px}
+.card{
+display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
+}
+.card img{width:120px;height:120px;object-fit:cover}
+.card div{padding:10px}
+
+.iconbar{
+display:flex;
+gap:15px;
+margin-top:10px;
+font-size:22px;
+}
+
+.iconbar span{
+cursor:pointer;
+}
+
+.trashItem{
+display:flex;
+justify-content:space-between;
+align-items:center;
+background:#222;
+margin:8px 0;
+padding:10px;
+border-radius:8px;
+}
+
+.trashIcons span{
+font-size:20px;
+margin-left:15px;
+cursor:pointer;
+}
+
+#detail img{width:100%;margin-top:50px}
+#detail .text{padding:10px;font-size:18px}
+
+#searchBox{margin:10px 0;padding:10px;width:100%;font-size:16px;border-radius:8px;border:1px solid #ccc}
 </style>
 </head>
 <body>
 
-<video class="bg" autoplay muted loop id="bgvideo">
+<video class="bg" autoplay muted loop>
 <source src="acilis.mp4" type="video/mp4">
 </video>
+
+<div id="screensaver">
+<video autoplay muted loop>
+<source src="acilis.mp4" type="video/mp4">
+</video>
+</div>
 
 <header>PARK FAALİYET</header>
 
@@ -43,163 +97,181 @@ textarea{height:140px}
 </nav>
 
 <section id="home" class="active">
-<input id="search" placeholder="Ara..." oninput="render()">
-<div id="list"></div>
+<input type="text" id="searchBox" placeholder="Ara...">
 </section>
 
 <section id="add">
 <h3>Yeni Kayıt</h3>
-<label>Dosya 1</label>
 <input type="file" id="img1" accept="image/*">
-<label>Dosya 2</label>
 <input type="file" id="img2" accept="image/*">
 <input type="date" id="date">
 <textarea id="desc" placeholder="Açıklama"></textarea>
 <button onclick="save()">Kaydet</button>
 </section>
 
+<section id="detail"></section>
+
 <section id="settings">
 <h3>Yedek</h3>
-<label>Başlangıç</label>
+<label>Başlangıç Tarihi</label>
 <input type="date" id="s1">
-<label>Bitiş</label>
+<label>Bitiş Tarihi</label>
 <input type="date" id="s2">
 <button onclick="exportZip()">ZIP Dışa Aktar</button>
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP İçe Aktar</button>
 
 <h3>Çöp Kutusu</h3>
+<button onclick="showTrash()">Çöp Kutusunu Aç</button>
 <div id="trash"></div>
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 <script>
-if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}
-
-let data = JSON.parse(localStorage.getItem("data")||"[]");
+let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
+let lastSave=0;
+let idleTimer;
 
-let timer;
-function resetTimer(){
-  clearTimeout(timer);
-  timer=setTimeout(()=>{document.getElementById("bgvideo").play();},20000);
+function resetIdle(){
+clearTimeout(idleTimer);
+screensaver.style.display="none";
+idleTimer=setTimeout(()=>screensaver.style.display="block",20000);
 }
-document.onclick=resetTimer;
-resetTimer();
+document.onclick=resetIdle;resetIdle();
 
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-render();
+if(id=="home") render();
 }
 
 function save(){
-if(!img1.files[0] && !img2.files[0]){alert("En az bir resim seç"); return;}
-let r={date:date.value,desc:desc.value,img1:"",img2:""};
-let reader1=new FileReader();
-reader1.onload=e=>{
-r.img1=e.target.result;
-if(img2.files[0]){
-let reader2=new FileReader();
-reader2.onload=e2=>{
-r.img2=e2.target.result;
-addRecord(r);
-};
-reader2.readAsDataURL(img2.files[0]);
-}else addRecord(r);
-};
-if(img1.files[0]) reader1.readAsDataURL(img1.files[0]);
-else if(img2.files[0]){
-let reader2=new FileReader();
-reader2.onload=e2=>{
-r.img2=e2.target.result;
-addRecord(r);
-};
-reader2.readAsDataURL(img2.files[0]);
-}
+if(Date.now()-lastSave<2000)return;
+lastSave=Date.now();
 
-function addRecord(r){
-let duplicate=data.find(d=>d.date===r.date && d.desc===r.desc);
-if(duplicate){alert("Aynı tarih ve açıklama zaten var!"); return;}
+let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
+
+if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
+
+[img1,img2].forEach(f=>{
+if(f.files[0]){
+let reader=new FileReader();
+reader.onload=e=>{
+r.imgs.push(e.target.result);
+if(r.imgs.length>=1){
 data.push(r);
-localStorage.setItem("data",JSON.stringify(data));
-img1.value=""; img2.value=""; desc.value=""; date.value="";
-render(); show("home");
+data.sort((a,b)=>new Date(b.date)-new Date(a.date)); // tarihe göre sıralama
+localStorage.setItem("records",JSON.stringify(data));
+img1.value="";img2.value="";desc.value="";date.value="";
+render();
+}
+};
+reader.readAsDataURL(f.files[0]);
+}
+});
 }
 
 function render(){
-let q=search.value.toLowerCase();
-let list=document.getElementById("list");
-list.innerHTML="";
-data.sort((a,b)=> new Date(b.date)-new Date(a.date));
-data.filter(x=> (x.date+x.desc).toLowerCase().includes(q))
-.forEach((r,i)=>{
-list.innerHTML+=`
-<div class="card" onclick="view(${i})">
+home.innerHTML=`<input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">`;
+data.forEach((r,i)=>{
+let c=document.createElement("div");
+c.className="card";
+c.innerHTML=`<img src="${r.imgs[0]}">
+<div>
 <b>${r.date}</b><br>${r.desc}
 <div class="iconbar">
-<span onclick="event.stopPropagation();edit(${i})">✏️</span>
-<span onclick="event.stopPropagation();del(${i})">🗑️</span>
+<span onclick="edit(${i})">✏️</span>
+<span onclick="delRec(${i})">🗑️</span>
 </div>
 </div>`;
+c.onclick=(e)=>{if(!e.target.closest('.iconbar')) openDetail(i)};
+home.appendChild(c);
 });
-renderTrash();
 }
 
-function view(i){
-let r=data[i];
-let html=`<div class="card">`;
-if(r.img1) html+=`<img src="${r.img1}">`;
-if(r.img2) html+=`<img src="${r.img2}">`;
-html+=`<b>${r.date}</b><br>${r.desc}</div>`;
-let w=window.open(); w.document.write(html);
+function filter(text){
+home.querySelectorAll(".card").forEach(c=>{
+c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
+});
 }
 
-function del(i){
-trash.push(data[i]);
+function delRec(i){
+if(!confirm("Silmek istediğine emin misin?"))return;
+trash.push({...data[i],deleted:Date.now()});
 data.splice(i,1);
-localStorage.setItem("data",JSON.stringify(data));
+localStorage.setItem("records",JSON.stringify(data));
 localStorage.setItem("trash",JSON.stringify(trash));
 render();
 }
 
-function renderTrash(){
-trashDiv=document.getElementById("trash"); trashDiv.innerHTML="";
-trash.forEach((r,i)=>{
-trashDiv.innerHTML+=`
-<div class="card">
-${r.date} - ${r.desc}
-<div class="iconbar">
-<span onclick="event.stopPropagation();restore(${i})">♻️</span>
-<span onclick="event.stopPropagation();perma(${i})">❌</span>
+function showTrash(){
+let html="";
+trash.forEach((t,i)=>{
+html+=`
+<div class="trashItem">
+<div>${t.date}<br>${t.desc}</div>
+<div class="trashIcons">
+<span onclick="restore(${i})">♻️</span>
+<span onclick="perma(${i})">🗑️</span>
 </div>
 </div>`;
 });
+document.getElementById("trash").innerHTML=html;
 }
 
-function restore(i){data.push(trash[i]); trash.splice(i,1); localStorage.setItem("data",JSON.stringify(data)); localStorage.setItem("trash",JSON.stringify(trash)); render();}
-function perma(i){trash.splice(i,1); localStorage.setItem("trash",JSON.stringify(trash)); render();}
+function restore(i){
+data.push(trash[i]);
+trash.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
+}
+
+function perma(i){
+if(!confirm("Kalıcı olarak silinsin mi?"))return;
+trash.splice(i,1);
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
+}
+
+function openDetail(i){
+let r=data[i];
+detail.innerHTML=`
+<img src="${r.imgs[0]}">
+<div class="text">${r.date}<br>${r.desc}</div>
+<button onclick="show('home')">Geri</button>`;
+show("detail");
+}
 
 async function exportZip(){
+let s=s1.value,e=s2.value;
 let zip=new JSZip();
-data.forEach((r,i)=>zip.file(i+".json",JSON.stringify(r)));
+data.filter(r=>r.date>=s&&r.date<=e)
+.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
 let blob=await zip.generateAsync({type:"blob"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download="yedek.zip";a.click();
+a.download=`${s}_${e}.zip`;a.click();
 }
 
 async function importZip(){
-let zip=await JSZip.loadAsync(zipInput.files[0]);
+let file=zipInput.files[0];
+let zip=await JSZip.loadAsync(file);
 for(let f in zip.files){
-let t=await zip.files[f].async("string");
-data.push(JSON.parse(t));
+let txt=await zip.files[f].async("string");
+data.push(JSON.parse(txt));
 }
-localStorage.setItem("data",JSON.stringify(data));
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+alert("Yüklendi");
 render();
 }
 
-function edit(i){alert("Düzenleme sonra eklenir");}
+function edit(i){
+alert("Düzenleme fonksiyonu istersen sonra ekleriz 😄");
+}
+
 render();
 </script>
 </body>
