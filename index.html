@@ -1,47 +1,152 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Park Faaliyet</title>
-  <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta charset="UTF-8">
+<title>Park Faaliyet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box;font-family:Arial}
+body{margin:0;overflow-x:hidden;background:#000;color:#fff}
+video.bg{
+position:fixed;top:0;left:0;width:100%;height:100%;
+object-fit:cover;z-index:-1;opacity:.4
+}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px}
+nav button{padding:10px 20px;font-size:16px}
+
+section{display:none;padding:15px}
+section.active{display:block}
+
+input,textarea,button{width:100%;margin:8px 0;padding:12px;font-size:16px}
+textarea{height:120px}
+
+.card{
+display:flex;background:#222;margin:10px 0;border-radius:10px;overflow:hidden
+}
+.card img{width:120px;height:120px;object-fit:cover}
+.card div{padding:10px}
+
+#detail img{width:100%;margin-top:50px}
+#detail .text{padding:10px;font-size:18px}
+
+</style>
 </head>
 <body>
 
-<video id="bgVideo" autoplay muted loop>
-  <source src="bg.mp4" type="video/mp4">
+<video class="bg" autoplay muted loop>
+<source src="video.mp4" type="video/mp4">
 </video>
 
-<div id="app">
+<header>PARK FAALİYET</header>
 
-  <header>
-    <h1>Park Faaliyet</h1>
-    <button onclick="openAdd()">+ Yeni Kayıt</button>
-    <button onclick="exportZip()">Dışa Aktar</button>
-  </header>
+<nav>
+<button onclick="show('home')">Ana</button>
+<button onclick="show('add')">Yeni Kayıt</button>
+<button onclick="show('settings')">Ayarlar</button>
+</nav>
 
-  <div id="list"></div>
+<section id="home" class="active"></section>
 
-</div>
+<section id="add">
+<h3>Yeni Kayıt</h3>
+<input type="file" id="img1" accept="image/*">
+<input type="file" id="img2" accept="image/*">
+<input type="date" id="date">
+<textarea id="desc" placeholder="Açıklama"></textarea>
+<button onclick="save()">Kaydet</button>
+</section>
 
-<div id="addModal" class="modal">
-  <div class="modalContent">
-    <h2>Yeni Kayıt</h2>
-    <input type="file" id="img1" accept="image/*">
-    <input type="file" id="img2" accept="image/*">
-    <input type="date" id="date">
-    <textarea id="desc" placeholder="Açıklama"></textarea>
-    <button onclick="saveRecord()">Kaydet</button>
-    <button onclick="closeAdd()">Kapat</button>
-  </div>
-</div>
+<section id="detail"></section>
 
-<script src="app.js"></script>
+<section id="settings">
+<h3>Dışa Aktar</h3>
+<input type="date" id="s1">
+<input type="date" id="s2">
+<button onclick="exportZip()">ZIP Oluştur</button>
+
+<h3>İçe Aktar</h3>
+<input type="file" id="zipInput">
+<button onclick="importZip()">ZIP Yükle</button>
+</section>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
+let data = JSON.parse(localStorage.getItem("records")||"[]");
+
+function show(id){
+document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+document.getElementById(id).classList.add("active");
+if(id=="home") render();
 }
+
+function save(){
+let r = {
+date: date.value,
+desc: desc.value,
+imgs: []
+};
+[img1,img2].forEach(f=>{
+if(f.files[0]){
+let reader=new FileReader();
+reader.onload=e=>{
+r.imgs.push(e.target.result);
+if(r.imgs.length>=1){
+data.push(r);
+localStorage.setItem("records",JSON.stringify(data));
+alert("Kaydedildi");
+}
+};
+reader.readAsDataURL(f.files[0]);
+}
+});
+}
+
+function render(){
+home.innerHTML="";
+data.forEach((r,i)=>{
+let c=document.createElement("div");
+c.className="card";
+c.innerHTML=`<img src="${r.imgs[0]}"><div><b>${r.date}</b><br>${r.desc}</div>`;
+c.onclick=()=>openDetail(i);
+home.appendChild(c);
+});
+}
+
+function openDetail(i){
+let r=data[i];
+detail.innerHTML=`
+<img src="${r.imgs[0]}">
+<div class="text">${r.date}<br>${r.desc}</div>
+<button onclick="show('home')">Geri</button>`;
+show("detail");
+}
+
+async function exportZip(){
+let s=s1.value, e=s2.value;
+let zip=new JSZip();
+data.filter(r=>r.date>=s&&r.date<=e).forEach((r,i)=>{
+zip.file(`kayıt${i}.json`,JSON.stringify(r));
+});
+let blob=await zip.generateAsync({type:"blob"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download=`${s}_${e}.zip`;
+a.click();
+}
+
+async function importZip(){
+let file=zipInput.files[0];
+let zip=await JSZip.loadAsync(file);
+for(let f in zip.files){
+let txt=await zip.files[f].async("string");
+data.push(JSON.parse(txt));
+}
+localStorage.setItem("records",JSON.stringify(data));
+alert("Yüklendi");
+}
+render();
 </script>
 </body>
 </html>
