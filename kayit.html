@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Yeni Kayıt</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Yeni Kayıt</h1>
+<form id="kayitForm">
+  <label>Tarih</label>
+  <input type="date" id="tarihInput" required>
+
+  <label>Konu</label>
+  <textarea id="konuInput" rows="5" placeholder="Konu girin..." required></textarea>
+
+  <label>Resim Ekle</label>
+  <input type="file" id="resimInput" accept="image/*" multiple>
+
+  <button type="submit">Kaydet</button>
+</form>
+
+<script src="app.js"></script>
+<script>
+document.getElementById("kayitForm").addEventListener("submit", (e) => {
+  e.preventDefault();
+  kayitEkle();
+});
+</script>
+</body>
+</html>

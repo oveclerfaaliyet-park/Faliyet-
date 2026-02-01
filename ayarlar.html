@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayarlar</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>Ayarlar</h1>
+<p id="sonGuncelleme">Son güncelleme: -</p>
+<button onclick="disarAktar()">Dışa Aktar (PC’ye)</button>
+<button onclick="iceriAl()">İçe Al (Telefon’dan)</button>
+
+<script src="app.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  sonGuncellemeGoster();
+});
+</script>
+</body>
+</html>
