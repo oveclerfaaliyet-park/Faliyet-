@@ -114,6 +114,7 @@ document.getElementById('img2').value="";
 // --- E-Tabloya Gönder ---
 fetch("https://script.google.com/macros/s/AKfycbwiNde5DiLuKsmZa84dDy_fLtEQQ22hN4qJb4QFuQHGXnOlAXykge1QA6QOypIw3HqV/exec", {
 method: "POST",
+headers: {"Content-Type":"application/json"},
 body: JSON.stringify(r)
 }).then(res=>res.json()).then(console.log).catch(console.error);
 });
