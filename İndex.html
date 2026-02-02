@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Park Faaliyet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
+</head>
+<body>
+
+<h1 style="color:red">YENI PWA SURUMU</h1>
+
+<input type="date" id="tarih"><br>
+<textarea id="aciklama" placeholder="Açıklama"></textarea><br>
+<input type="file" id="img1" accept="image/*"><br>
+<input type="file" id="img2" accept="image/*"><br>
+<button onclick="gonder()">Kaydet</button>
+
+<script>
+const API_URL = "APPS_SCRIPT_URL_BURAYA";
+
+function fileToBase64(file){
+  return new Promise(resolve=>{
+    if(!file){ resolve(""); return; }
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function gonder(){
+  const tarih = document.getElementById("tarih").value;
+  const aciklama = document.getElementById("aciklama").value;
+  const f1 = document.getElementById("img1").files[0];
+  const f2 = document.getElementById("img2").files[0];
+
+  const b1 = await fileToBase64(f1);
+  const b2 = await fileToBase64(f2);
+
+  const payload = {
+    tarih,
+    aciklama,
+    resim1: b1,
+    resim2: b2
+  };
+
+  const res = await fetch(API_URL, {
+    method:"POST",
+    body: JSON.stringify(payload)
+  });
+
+  const json = await res.json();
+  alert("Durum: " + json.status);
+}
+</script>
+</body>
+</html>
