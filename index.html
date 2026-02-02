@@ -33,82 +33,68 @@ input,textarea,button{width:100%;padding:8px;margin:6px 0}
 <script>
 const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbz7ZCgd7Lw7KnN_R6ckz-AKxUivBC2_EFtdh9ADsMx6q8mfHR_kN839f3bpg3gNA0b1Gw/exec";
 
-// Base64 okuyup döndürür; boşsa ""
 function readFileBase64(file){
-  return new Promise((resolve)=>{
-    if(!file) { resolve(""); return; }
+  return new Promise(resolve=>{
+    if(!file){resolve(""); return;}
     const r = new FileReader();
-    r.onload = e => resolve(e.target.result);
-    r.onerror = () => resolve("");
+    r.onload = e=>resolve(e.target.result);
+    r.onerror=()=>resolve("");
     r.readAsDataURL(file);
   });
 }
 
-// FormData ile gönder (preflight kaçınmak için)
-async function sendFormData(tarih, aciklama, resim1Base64, resim2Base64){
+async function sendFormData(tarih, aciklama, r1, r2){
   const form = new FormData();
   form.append("tarih", tarih);
   form.append("aciklama", aciklama);
-  // Base64 string alanlara ekliyoruz (text)
-  form.append("resim1", resim1Base64 || "");
-  form.append("resim2", resim2Base64 || "");
-
-  const resp = await fetch(DEPLOY_URL, {
-    method: "POST",
-    body: form
-  });
+  form.append("resim1", r1||"");
+  form.append("resim2", r2||"");
+  const resp = await fetch(DEPLOY_URL, {method:"POST", body:form});
   return resp.json();
 }
 
 document.getElementById("saveBtn").addEventListener("click", async ()=>{
-  const tarih = document.getElementById("date").value;
-  const aciklama = document.getElementById("desc").value;
-  if(!tarih || !aciklama){ alert("Tarih ve açıklama gerekli"); return; }
-  const resim1File = document.getElementById("img1").files[0];
-  const resim2File = document.getElementById("img2").files[0];
-  const r1 = await readFileBase64(resim1File);
-  const r2 = await readFileBase64(resim2File);
+  const tarih=document.getElementById("date").value;
+  const desc=document.getElementById("desc").value;
+  if(!tarih||!desc){alert("Tarih ve açıklama gerekli");return;}
+  const r1=await readFileBase64(document.getElementById("img1").files[0]);
+  const r2=await readFileBase64(document.getElementById("img2").files[0]);
 
   try{
-    const res = await sendFormData(tarih, aciklama, r1, r2);
-    if(res.status === "success"){
+    const res=await sendFormData(tarih, desc, r1, r2);
+    if(res.status==="success"){
       alert("Kaydedildi!");
-      // temizle
       document.getElementById("date").value="";
       document.getElementById("desc").value="";
       document.getElementById("img1").value="";
       document.getElementById("img2").value="";
       loadData();
-    } else {
-      alert("Sunucu hatası: " + (res.message || "bilinmiyor"));
+    }else{
+      alert("Sunucu hatası: "+(res.message||"bilinmiyor"));
       console.error(res);
     }
-  } catch(err){
-    console.error("Gönderme hatası", err);
-    alert("Gönderme hatası: konsolu kontrol et.");
+  }catch(err){
+    console.error(err);
+    alert("Gönderme hatası. Konsolu kontrol et.");
   }
 });
 
-// GET ile verileri çek ve render et
 async function loadData(){
-  const container = document.getElementById("cardsContainer");
-  container.innerHTML = "Yükleniyor...";
+  const container=document.getElementById("cardsContainer");
+  container.innerHTML="Yükleniyor...";
   try{
-    const r = await fetch(DEPLOY_URL + "?action=get");
-    const data = await r.json();
-    if(!Array.isArray(data) || data.length===0){ container.innerHTML = "Kayıt yok"; return; }
-    container.innerHTML = "";
-    data.forEach(item => {
-      const div = document.createElement("div");
-      div.className = "card";
-      const imgs = (item.resim1? `<img src="${item.resim1}">` : "") + (item.resim2? `<img src="${item.resim2}">` : "");
-      div.innerHTML = `<div><strong>${item.tarih || ""}</strong></div><div>${item.aciklama || ""}</div><div>${imgs}</div>`;
+    const r=await fetch(DEPLOY_URL);
+    const data=await r.json();
+    container.innerHTML="";
+    if(!Array.isArray(data)||data.length===0){container.innerHTML="Kayıt yok";return;}
+    data.forEach(item=>{
+      const div=document.createElement("div");
+      div.className="card";
+      const imgs=(item.resim1?`<img src="${item.resim1}">`:"")+(item.resim2?`<img src="${item.resim2}">`:"");
+      div.innerHTML=`<div><strong>${item.tarih||""}</strong></div><div>${item.aciklama||""}</div><div>${imgs}</div>`;
       container.appendChild(div);
     });
-  }catch(err){
-    console.error("Load hata", err);
-    container.innerHTML = "Veri yüklenemedi (konsolu kontrol et).";
-  }
+  }catch(err){console.error(err);container.innerHTML="Veri yüklenemedi";}
 }
 
 window.addEventListener("load", loadData);
