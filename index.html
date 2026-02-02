@@ -4,114 +4,121 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.json">
 <style>
 *{box-sizing:border-box;font-family:sans-serif}
-body{margin:0;padding:10px;background:#f2f2f2;color:#000}
-h2{text-align:center}
-input,textarea,button{width:100%;padding:10px;margin:6px 0;font-size:16px}
-button{background:#2196f3;color:#fff;border:none;border-radius:6px}
-button:disabled{background:#999}
-.card{background:#fff;margin:10px 0;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-.card img{width:48%;height:200px;object-fit:cover;margin:1%}
-#loading{display:none;text-align:center;font-size:18px;margin:10px}
-#addBtn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;font-size:30px}
-#formBox{display:none;background:#fff;padding:10px;border-radius:10px}
+body,html{margin:0;padding:0;height:100%}
+.page{display:none;height:100%;background-size:cover;background-position:center}
+#home{background-image:url("pexels-eberhardgross-1612351.jpg")}
+#add{background-image:url("pexels-skylar-kang-6044198.jpg")}
+#settings{background-image:url("pexels-eberhardgross-1301976.jpg")}
+.header{background:#fff;padding:10px;position:sticky;top:0}
+.card{background:#fff;margin:10px;padding:10px;border-radius:8px}
+.card img{width:48%;height:200px;object-fit:cover;border-radius:6px}
+#fab{position:fixed;bottom:20px;right:20px;
+width:60px;height:60px;border-radius:50%;
+background:#2196f3;color:#fff;font-size:40px;
+display:flex;align-items:center;justify-content:center}
+#loader{position:fixed;top:0;left:0;width:100%;height:100%;
+background:#000;color:#fff;display:flex;
+align-items:center;justify-content:center;font-size:20px}
+video{width:100%;height:100%;object-fit:cover}
 </style>
 </head>
 <body>
 
-<h2>Park Faaliyet</h2>
-
-<div id="loading">⏳ Kayıt yapılıyor...</div>
-
-<div id="formBox">
-  <h3>Yeni Kayıt</h3>
-  <input type="date" id="date">
-  <textarea id="desc" placeholder="Açıklama"></textarea>
-  <input type="file" id="img1" accept="image/*">
-  <input type="file" id="img2" accept="image/*">
-  <button id="saveBtn">Kaydet</button>
+<div id="loader">
+<video id="intro" src="acilis.mp4" autoplay muted></video>
 </div>
 
-<div id="cardsContainer"></div>
+<div id="home" class="page">
+<div class="header">Park Faaliyet</div>
+<div id="list"></div>
+</div>
 
-<button id="addBtn">+</button>
+<div id="add" class="page">
+<div class="header">Yeni Kayıt</div>
+<div class="card">
+<input type="date" id="date"><br>
+<textarea id="desc" placeholder="Açıklama"></textarea><br>
+<input type="file" id="img1" accept="image/*"><br>
+<input type="file" id="img2" accept="image/*"><br>
+<button onclick="save()">Kaydet</button>
+<div id="status"></div>
+</div>
+</div>
+
+<div id="settings" class="page">
+<div class="header">Ayarlar</div>
+<div class="card">
+PDF ve filtre ileride buraya.
+</div>
+</div>
+
+<div id="fab" onclick="show('add')">+</div>
 
 <script>
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxAIVyi1HVm-230dheIyVWoYcZr7-8FE9YZNsOWXp1DijEYx39rZ1CW0XZIR7aBURvrJw/exec";
+const API = "https://script.google.com/macros/s/AKfycbxAIVyi1HVm-230dheIyVWoYcZr7-8FE9YZNsOWXp1DijEYx39rZ1CW0XZIR7aBURvrJw/exec";
+let sending=false;
 
-let sending = false;
+setTimeout(()=>{document.getElementById("loader").style.display="none";show("home")},15000);
+document.body.onclick=()=>document.getElementById("loader").style.display="none";
 
-async function fetchData(){
-  const res = await fetch(DEPLOY_URL);
-  const data = await res.json();
-  render(data);
+function show(p){
+document.querySelectorAll(".page").forEach(x=>x.style.display="none");
+document.getElementById(p).style.display="block";
+if(p=="home") load();
 }
 
-function render(data){
-  const box = document.getElementById("cardsContainer");
-  box.innerHTML="";
-  data.reverse().forEach(r=>{
-    box.innerHTML += `
-      <div class="card">
-        <div>
-          ${r.resim1 ? `<img src="${r.resim1}">` : ""}
-          ${r.resim2 ? `<img src="${r.resim2}">` : ""}
-        </div>
-        <div><b>${r.tarih}</b></div>
-        <div>${r.aciklama}</div>
-      </div>
-    `;
-  });
+async function load(){
+const res = await fetch(API);
+const data = await res.json();
+const list = document.getElementById("list");
+list.innerHTML="";
+data.forEach(r=>{
+list.innerHTML+=`
+<div class="card">
+<div style="display:flex;gap:5px">
+<img src="${r.resim1}">
+<img src="${r.resim2}">
+</div>
+<b>${r.tarih}</b><br>${r.aciklama}
+</div>`;
+});
 }
 
-function readFile(file){
-  return new Promise(res=>{
-    if(!file){res(""); return;}
-    const fr=new FileReader();
-    fr.onload=e=>res(e.target.result);
-    fr.readAsDataURL(file);
-  });
+function compress(file){
+return new Promise(r=>{
+const img=new Image();
+img.onload=()=>{
+const c=document.createElement("canvas");
+c.width=800;c.height=600;
+c.getContext("2d").drawImage(img,0,0,800,600);
+r(c.toDataURL("image/jpeg",0.5));
+};
+img.src=URL.createObjectURL(file);
+});
 }
 
-document.getElementById("addBtn").onclick=()=>{
-  document.getElementById("formBox").style.display="block";
+async function save(){
+if(sending) return;
+sending=true;
+document.getElementById("status").innerText="Kayıt yapılıyor...";
+
+const data={
+tarih:date.value,
+aciklama:desc.value,
+resim1: await compress(img1.files[0]),
+resim2: await compress(img2.files[0])
 };
 
-document.getElementById("saveBtn").onclick=async()=>{
-  if(sending) return;
-  sending=true;
-
-  const tarih=date.value;
-  const aciklama=desc.value;
-  if(!tarih||!aciklama){alert("Tarih ve açıklama zorunlu"); sending=false; return;}
-
-  loading.style.display="block";
-  saveBtn.disabled=true;
-
-  const r1=await readFile(img1.files[0]);
-  const r2=await readFile(img2.files[0]);
-
-  fetch(DEPLOY_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({tarih,aciklama,resim1:r1,resim2:r2})
-  }).then(r=>r.json()).then(r=>{
-    alert("Kaydedildi");
-    formBox.style.display="none";
-    loading.style.display="none";
-    saveBtn.disabled=false;
-    sending=false;
-    date.value="";desc.value="";img1.value="";img2.value="";
-    fetchData();
-  }).catch(err=>{
-    alert("Hata");
-    console.log(err);
-    sending=false;
-  });
-};
-
-fetchData();
+fetch(API,{method:"POST",body:JSON.stringify(data)})
+.then(r=>r.json()).then(()=>{
+document.getElementById("status").innerText="Kaydedildi";
+sending=false;
+show("home");
+});
+}
 </script>
 </body>
 </html>
