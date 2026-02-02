@@ -1,111 +1,117 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Park Faaliyet</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:sans-serif;background:#111;color:#fff;margin:0;padding:0;}
-input,textarea,button{width:100%;margin:5px 0;padding:8px;}
-button{cursor:pointer;}
-.card{background:#222;margin:5px;padding:10px;border-radius:8px;}
-.card img{width:100px;height:100px;margin-right:5px;object-fit:cover;}
+body{font-family:Arial,sans-serif;background:#111;color:#fff;padding:12px}
+input,textarea,button{width:100%;padding:8px;margin:6px 0}
+.card{background:#222;padding:10px;border-radius:8px;margin:8px 0}
+.card img{max-width:120px;height:auto;margin-right:6px}
 </style>
 </head>
 <body>
-
 <h2>Park Faaliyet</h2>
 
-<section id="add">
-<h3>Yeni Kayıt</h3>
-<label>Tarih:</label>
-<input type="date" id="date">
-<label>Açıklama:</label>
-<textarea id="desc"></textarea>
-<label>Resim 1:</label>
-<input type="file" id="img1" accept="image/*">
-<label>Resim 2:</label>
-<input type="file" id="img2" accept="image/*">
-<button id="saveBtn">Kaydet</button>
-</section>
+<div>
+  <label>Tarih</label>
+  <input type="date" id="date">
+  <label>Açıklama</label>
+  <textarea id="desc"></textarea>
+  <label>Resim 1</label>
+  <input type="file" id="img1" accept="image/*">
+  <label>Resim 2</label>
+  <input type="file" id="img2" accept="image/*">
+  <button id="saveBtn">Kaydet</button>
+</div>
 
-<section id="listSection">
+<hr>
 <h3>Kayıtlar</h3>
-<div id="cardsContainer"></div>
-</section>
+<div id="cardsContainer">Yükleniyor...</div>
 
 <script>
 const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbz7ZCgd7Lw7KnN_R6ckz-AKxUivBC2_EFtdh9ADsMx6q8mfHR_kN839f3bpg3gNA0b1Gw/exec";
 
-// E-Tablodan verileri çek
-async function fetchData(){
-  try{
-    const res = await fetch(DEPLOY_URL);
-    const data = await res.json();
-    render(data);
-  } catch(e){
-    console.error("Veri çekme hatası", e);
-  }
-}
-
-// Kayıtları göster
-function render(data){
-  const container = document.getElementById("cardsContainer");
-  container.innerHTML = "";
-  data.forEach((r,i)=>{
-    const card = document.createElement("div");
-    card.className="card";
-    card.innerHTML = `
-      <div><strong>${r.tarih}</strong></div>
-      <div>${r.aciklama}</div>
-      <div>${r.resim1 ? '<img src="'+r.resim1+'">' : ''}${r.resim2 ? '<img src="'+r.resim2+'">' : ''}</div>
-    `;
-    container.appendChild(card);
+// Base64 okuyup döndürür; boşsa ""
+function readFileBase64(file){
+  return new Promise((resolve)=>{
+    if(!file) { resolve(""); return; }
+    const r = new FileReader();
+    r.onload = e => resolve(e.target.result);
+    r.onerror = () => resolve("");
+    r.readAsDataURL(file);
   });
 }
 
-// Dosyayı base64 olarak oku
-function readFile(file){
-  return new Promise((resolve,reject)=>{
-    if(!file){resolve(""); return;}
-    const reader = new FileReader();
-    reader.onload = e=>resolve(e.target.result);
-    reader.onerror = err=>reject(err);
-    reader.readAsDataURL(file);
+// FormData ile gönder (preflight kaçınmak için)
+async function sendFormData(tarih, aciklama, resim1Base64, resim2Base64){
+  const form = new FormData();
+  form.append("tarih", tarih);
+  form.append("aciklama", aciklama);
+  // Base64 string alanlara ekliyoruz (text)
+  form.append("resim1", resim1Base64 || "");
+  form.append("resim2", resim2Base64 || "");
+
+  const resp = await fetch(DEPLOY_URL, {
+    method: "POST",
+    body: form
   });
+  return resp.json();
 }
 
-// Kaydet butonu
 document.getElementById("saveBtn").addEventListener("click", async ()=>{
   const tarih = document.getElementById("date").value;
-  const desc = document.getElementById("desc").value;
-  const img1 = await readFile(document.getElementById("img1").files[0]);
-  const img2 = await readFile(document.getElementById("img2").files[0]);
+  const aciklama = document.getElementById("desc").value;
+  if(!tarih || !aciklama){ alert("Tarih ve açıklama gerekli"); return; }
+  const resim1File = document.getElementById("img1").files[0];
+  const resim2File = document.getElementById("img2").files[0];
+  const r1 = await readFileBase64(resim1File);
+  const r2 = await readFileBase64(resim2File);
 
-  if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
-
-  fetch(DEPLOY_URL,{
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({tarih, aciklama:desc, resim1:img1, resim2:img2})
-  })
-  .then(res=>res.json())
-  .then(res=>{
-    if(res.status==="success"){
+  try{
+    const res = await sendFormData(tarih, aciklama, r1, r2);
+    if(res.status === "success"){
       alert("Kaydedildi!");
+      // temizle
       document.getElementById("date").value="";
       document.getElementById("desc").value="";
       document.getElementById("img1").value="";
       document.getElementById("img2").value="";
-      fetchData(); // Listeyi güncelle
-    } else alert("Hata: "+res.message);
-  })
-  .catch(console.error);
+      loadData();
+    } else {
+      alert("Sunucu hatası: " + (res.message || "bilinmiyor"));
+      console.error(res);
+    }
+  } catch(err){
+    console.error("Gönderme hatası", err);
+    alert("Gönderme hatası: konsolu kontrol et.");
+  }
 });
 
-// Sayfa açılınca verileri çek
-fetchData();
-</script>
+// GET ile verileri çek ve render et
+async function loadData(){
+  const container = document.getElementById("cardsContainer");
+  container.innerHTML = "Yükleniyor...";
+  try{
+    const r = await fetch(DEPLOY_URL + "?action=get");
+    const data = await r.json();
+    if(!Array.isArray(data) || data.length===0){ container.innerHTML = "Kayıt yok"; return; }
+    container.innerHTML = "";
+    data.forEach(item => {
+      const div = document.createElement("div");
+      div.className = "card";
+      const imgs = (item.resim1? `<img src="${item.resim1}">` : "") + (item.resim2? `<img src="${item.resim2}">` : "");
+      div.innerHTML = `<div><strong>${item.tarih || ""}</strong></div><div>${item.aciklama || ""}</div><div>${imgs}</div>`;
+      container.appendChild(div);
+    });
+  }catch(err){
+    console.error("Load hata", err);
+    container.innerHTML = "Veri yüklenemedi (konsolu kontrol et).";
+  }
+}
 
+window.addEventListener("load", loadData);
+</script>
 </body>
 </html>
