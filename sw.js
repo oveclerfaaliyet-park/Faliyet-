@@ -1,7 +1,23 @@
-self.addEventListener('install', function(e){
-  console.log('Service Worker kuruldu');
+const CACHE_NAME = "parkfaaliyet-cache-v1";
+const urlsToCache = [
+  "./index.html",
+  "./manifest.json",
+  "./sw.js",
+  "./style.css"   // varsa ekle
+];
+
+// Install event
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(urlsToCache))
+  );
 });
 
-self.addEventListener('fetch', function(e){
-  e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
+// Fetch event
+self.addEventListener("fetch", (event) => {
+  event.respondWith(
+    caches.match(event.request)
+      .then((response) => response || fetch(event.request))
+  );
 });
