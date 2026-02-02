@@ -5,9 +5,12 @@
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-  body{font-family:Segoe UI, sans-serif; background:#111; color:#fff; padding:20px;}
-  input, textarea, button{width:100%; margin:8px 0; padding:10px; font-size:16px;}
-  textarea{height:120px;}
+body{font-family:Segoe UI, sans-serif; background:#111; color:#fff; padding:20px;}
+input, textarea, button{width:100%; margin:8px 0; padding:10px; font-size:16px;}
+textarea{height:120px;}
+button{background:#4CAF50; color:white; border:none; cursor:pointer;}
+button:hover{background:#45a049;}
+h2{margin-bottom:20px;}
 </style>
 </head>
 <body>
@@ -29,7 +32,7 @@
 <button onclick="kaydet()">Kaydet</button>
 
 <script>
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbzyeVampQxZy9WoGEg6kdZ75y6zvleABnajWmdM1QXXJe74g3DWVGRIL3mD24xzMlzY4g/exec";
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyX9-vx10lN5C7jN9oGcmUnxTTYr-ggY3etqh42mLqNTKLFUFHPwBMTNsQ7pUDb5XRcCw/exec";
 
 function kaydet(){
   const tarih = document.getElementById('date').value;
@@ -42,7 +45,6 @@ function kaydet(){
     return;
   }
 
-  // Base64 okuma
   const reader1 = new FileReader();
   const reader2 = new FileReader();
 
