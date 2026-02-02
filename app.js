@@ -1,7 +1,7 @@
-// DEPLOY_URL → Apps Script’in en son deploy URL’si
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxKIVZEkKWNguUY8CWmdc_poxJA5HA_RzboKZq8JmhFW7Hqfk6cQxzN8m2eD6lgsyZ-MA/exec";
+// Apps Script POST URL’nizi buraya koyun
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxrLZEg8icXGcnmq8yVYKsUsKgVrTYfXUdkbknP3y_YA7nMbo9S5WgPqNM68FwgI5M86w/exec";
 
-// Tarayıcıda saklanan kayıtlar (opsiyonel, offline)
+// Tarayıcıda saklanan kayıtlar
 let records = JSON.parse(localStorage.getItem("records") || "[]");
 
 function render(){
@@ -14,19 +14,18 @@ function render(){
       <div>${r.desc}</div>
     </div>`;
   });
-  const list = document.getElementById("list");
-  if(list) list.innerHTML=html;
+  document.getElementById("list").innerHTML = html;
 }
 render();
 
-function openAdd(){
-  const modal = document.getElementById("addModal");
-  if(modal) modal.style.display="block";
+function showSection(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  const sec = document.getElementById(id);
+  if(sec) sec.classList.add("active");
 }
-function closeAdd(){
-  const modal = document.getElementById("addModal");
-  if(modal) modal.style.display="none";
-}
+
+function openAdd(){ document.getElementById("addModal").style.display="block"; }
+function closeAdd(){ document.getElementById("addModal").style.display="none"; }
 
 async function saveRecord(){
   const f1 = document.getElementById("img1").files[0];
@@ -37,12 +36,8 @@ async function saveRecord(){
   if(!dateVal || !descVal){ alert("Tarih ve açıklama gerekli"); return; }
 
   const imgs = [];
-  if(f1){
-    imgs.push(await readFile(f1));
-  }
-  if(f2){
-    imgs.push(await readFile(f2));
-  }
+  if(f1) imgs.push(await readFile(f1));
+  if(f2) imgs.push(await readFile(f2));
 
   // Tarayıcıda kaydet
   records.push({imgs, date: dateVal, desc: descVal});
@@ -50,11 +45,11 @@ async function saveRecord(){
   render();
   closeAdd();
 
-  // Apps Script’e POST
+  // Apps Script'e gönder
   fetch(DEPLOY_URL, {
     method:"POST",
     headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({tarih: dateVal, aciklama: descVal, resim1: imgs[0] || "", resim2: imgs[1] || ""})
+    body: JSON.stringify({tarih: dateVal, aciklama: descVal, resim1: imgs[0]||"", resim2: imgs[1]||""})
   })
   .then(res=>res.json())
   .then(res=>{
@@ -72,15 +67,7 @@ function readFile(file){
   });
 }
 
-function exportZip(){
-  const blob = new Blob([JSON.stringify(records)], {type:"application/json"});
-  const a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "park_"+new Date().toISOString().slice(0,7)+".json";
-  a.click();
-}
-
-// Detay açma fonksiyonu (opsiyonel)
+// Detay göster
 function openDetail(i){
   const r = records[i];
   if(!r) return;
