@@ -5,29 +5,127 @@
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="manifest" href="manifest.json">
-<script src="app.js"></script>
+<script>
+if("serviceWorker" in navigator){
+    navigator.serviceWorker.register("sw.js");
+}
+</script>
 <style>
-body{font-family:Arial, sans-serif;background:#f4f4f4;padding:10px;}
-h1{color:#333;text-align:center;}
-input,textarea,button{width:100%;margin:5px 0;padding:10px;font-size:16px;}
+*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+body{margin:0;overflow:hidden;background:#000;color:#fff;}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold;}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px;}
+nav button{padding:10px 15px;font-size:16px;}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;}
+section.active{display:block;}
+input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px;}
 textarea{height:150px;}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;color:#fff;}
+.card img{width:100px;height:100px;object-fit:cover;margin-right:6px;}
+.card div{flex:1;padding:6px;}
 </style>
 </head>
 <body>
-<h1>Park Faaliyet Form</h1>
+<header>PARK FAALİYET</header>
 
+<nav>
+<button onclick="show('home')">Ana</button>
+<button onclick="show('add')">Yeni Kayıt</button>
+</nav>
+
+<section id="home" class="active">
+<div id="cardsContainer">Yükleniyor...</div>
+</section>
+
+<section id="add">
+<h3>Yeni Kayıt</h3>
 <label>Tarih</label>
 <input type="date" id="date">
-
 <label>Açıklama</label>
-<textarea id="desc" placeholder="Açıklama girin"></textarea>
-
+<textarea id="desc"></textarea>
 <label>Resim 1</label>
 <input type="file" id="img1" accept="image/*">
-
 <label>Resim 2</label>
 <input type="file" id="img2" accept="image/*">
-
 <button id="saveBtn">Kaydet</button>
+</section>
+
+<script>
+// ✅ Yeni DEPLOY_URL senin verdiğin Apps Script URL’i
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxLgR4Hb-VFRX6u98i0q0YKeqGfePDmRdpEeC3iMwnwVy-CKqx_ppLkKNmgHyYWmTCI0w/exec";
+
+function show(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if(id==="home") loadRecords();
+}
+
+// Dosya okuma
+function readFile(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){resolve(""); return;}
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+// Kaydet
+document.getElementById('saveBtn').addEventListener('click', async function(){
+  let tarih = document.getElementById('date').value;
+  let desc = document.getElementById('desc').value;
+  let resim1 = await readFile(document.getElementById('img1').files[0]);
+  let resim2 = await readFile(document.getElementById('img2').files[0]);
+
+  if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
+
+  fetch(DEPLOY_URL, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({tarih, aciklama:desc, resim1, resim2})
+  })
+  .then(res=>res.json())
+  .then(res=>{
+    if(res.status==="success"){
+      alert("Kaydedildi!");
+      document.getElementById('date').value="";
+      document.getElementById('desc').value="";
+      document.getElementById('img1').value="";
+      document.getElementById('img2').value="";
+      show('home');
+    } else {
+      alert("Hata: "+res.message);
+    }
+  }).catch(console.error);
+});
+
+// E-Tablodan veri çek
+async function loadRecords(){
+  const container = document.getElementById("cardsContainer");
+  container.innerHTML="Yükleniyor...";
+  try{
+    const res = await fetch(DEPLOY_URL + "?action=get");
+    const data = await res.json();
+    if(data.length===0){container.innerHTML="Kayıt yok"; return;}
+    container.innerHTML="";
+    data.forEach((r)=>{
+      let card = document.createElement("div");
+      card.className="card";
+      card.innerHTML=`
+        <div>${r.resim1?`<img src="${r.resim1}">`:''}${r.resim2?`<img src="${r.resim2}">`:''}</div>
+        <div>${r.tarih}</div>
+        <div>${r.aciklama}</div>
+      `;
+      container.appendChild(card);
+    });
+  }catch(err){
+    container.innerHTML="Veri yüklenemedi.";
+    console.error(err);
+  }
+}
+
+window.onload = ()=>{show('home');};
+</script>
 </body>
 </html>
