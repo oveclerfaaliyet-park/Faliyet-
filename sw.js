@@ -1,23 +1,10 @@
-const CACHE_NAME = "parkfaaliyet-cache-v1";
-const urlsToCache = [
-  "./index.html",
-  "./manifest.json",
-  "./sw.js",
-  "./style.css"   // varsa ekle
-];
+const CACHE_NAME = "park-cache-v1";
+const urlsToCache = ["./index.html","./manifest.json","./sw.js"];
 
-// Install event
-self.addEventListener("install", (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => cache.addAll(urlsToCache))
-  );
+self.addEventListener("install", e=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(urlsToCache)));
 });
 
-// Fetch event
-self.addEventListener("fetch", (event) => {
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => response || fetch(event.request))
-  );
+self.addEventListener("fetch", e=>{
+  e.respondWith(caches.match(e.request).then(resp=>resp || fetch(e.request)));
 });
