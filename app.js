@@ -1,5 +1,5 @@
 // Apps Script POST URL’nizi buraya koyun
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxrLZEg8icXGcnmq8yVYKsUsKgVrTYfXUdkbknP3y_YA7nMbo9S5WgPqNM68FwgI5M86w/exec";
+const DEPLOY_URL = "const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxrLZEg8icXGcnmq8yVYKsUsKgVrTYfXUdkbknP3y_YA7nMbo9S5WgPqNM68FwgI5M86w/exec";;
 
 // Tarayıcıda saklanan kayıtlar
 let records = JSON.parse(localStorage.getItem("records") || "[]");
