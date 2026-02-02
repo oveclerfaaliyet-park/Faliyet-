@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-
 <link rel="manifest" href="manifest.json">
 <script>
 if("serviceWorker" in navigator){
@@ -32,7 +31,7 @@ textarea{height:200px}
 
 .card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
-.card div{padding:10px;flex:1;position:relative}
+.card div{padding:10px;flex:1;position:relative;user-select:text;line-height:1.3;}
 
 .iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
 .iconbar span{cursor:pointer}
@@ -42,7 +41,7 @@ textarea{height:200px}
 
 #detail{padding:10px;background:#fff;color:#000;}
 #detail img{width:48%;margin-top:25px;margin-right:1%;}
-#detail .text{padding:5px;font-size:18px;margin-top:5px;}
+#detail .text{padding:5px;font-size:16px;line-height:1.4;user-select:text;}
 
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 
@@ -95,10 +94,10 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <input type="date" id="s1">
 <label>Bitiş Tarihi</label>
 <input type="date" id="s2">
-<button onclick="exportZip()">ZIP Dışa Aktar</button>
+<button id="exportZipBtn">ZIP Dışa Aktar</button>
 <input type="file" id="zipInput">
-<button onclick="importZip()">ZIP İçe Aktar</button>
-<button onclick="exportPDF()">PDF Oluştur</button>
+<button id="importZipBtn">ZIP İçe Aktar</button>
+<button id="exportPDFBtn">PDF Oluştur</button>
 
 <h3>Çöp Kutusu</h3>
 <button onclick="showTrash()">Çöp Kutusunu Aç</button>
@@ -118,7 +117,7 @@ let idleTimer;
 function resetIdle(){
 clearTimeout(idleTimer);
 screensaver.style.display="none";
-idleTimer=setTimeout(()=>screensaver.style.display="block",15000); // 15 saniye sonra video devreye giriyor
+idleTimer=setTimeout(()=>screensaver.style.display="block",15000);
 }
 document.onclick=resetIdle;resetIdle();
 
@@ -175,7 +174,7 @@ updateBackupInfo();
 render();
 }
 
-// --- Açılış videosu görünmez başta ---
+// --- Açılış videosu ---
 document.getElementById('mainVideo').style.display='none';
 }
 
@@ -277,19 +276,19 @@ show("detail");
 }
 
 // ZIP Export/Import
-async function exportZip(){
+document.getElementById("exportZipBtn").onclick=async ()=>{
 let s=s1.value,e=s2.value;
 let zip=new JSZip();
-data.filter(r=>r.date>=s&&r.date<=e)
-.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
+data.filter(r=>r.date>=s&&r.date<=e).forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
 let blob=await zip.generateAsync({type:"blob"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
 a.download=`${s}_${e}.zip`;a.click();
-}
+};
 
-async function importZip(){
+document.getElementById("importZipBtn").onclick=async ()=>{
 let file=zipInput.files[0];
+if(!file){alert("Lütfen bir ZIP dosyası seçin"); return;}
 let zip=await JSZip.loadAsync(file);
 for(let f in zip.files){
 let txt=await zip.files[f].async("string");
@@ -300,50 +299,31 @@ localStorage.setItem("records",JSON.stringify(data));
 alert("Yüklendi");
 render();
 updateBackupInfo();
-}
+};
 
-// --- PDF 3 SÜTUNLU ---
-function exportPDF(){
-    const { jsPDF } = window.jspdf;
-    let doc = new jsPDF({unit:'pt', format:'a4'});
-    const margin = 20;
-    const pageWidth = doc.internal.pageSize.width - 2 * margin;
-    const pageHeight = doc.internal.pageSize.height - 2 * margin;
-    const colWidth = pageWidth / 3;
-    const rowHeight = 150;
-
-    let x = margin;
-    let y = margin;
-    let col = 0;
-
-    data.forEach((r, i) => {
-        if(r.imgs[0]){
-            doc.addImage(r.imgs[0], 'JPEG', x, y, colWidth - 10, rowHeight - 30);
-        }
-        doc.text(formatDate(r.date) + " " + r.desc, x, y + rowHeight - 10, { maxWidth: colWidth - 10 });
-
-        col++;
-        x = margin + col * colWidth;
-
-        if(col > 2){
-            col = 0;
-            x = margin;
-            y += rowHeight;
-            if(y + rowHeight > pageHeight + margin){
-                doc.addPage();
-                y = margin;
-            }
-        }
-    });
-
-    doc.save("faaliyet.pdf");
-}
+// PDF Oluştur
+document.getElementById("exportPDFBtn").onclick=()=>{
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF('p','mm','a4');
+let colWidth=65, rowHeight=60;
+let x=10, y=10, colCount=0;
+data.forEach((r,i)=>{
+if(colCount===3){ colCount=0; x=10; y+=rowHeight+10; }
+let curX=10 + colWidth*colCount;
+if(r.imgs[0]) doc.addImage(r.imgs[0],'JPEG',curX,y,60,40);
+let splitText = doc.splitTextToSize(r.desc, 60);
+doc.text(formatDate(r.date)+"\n"+splitText.join("\n"), curX, y+45);
+colCount++;
+});
+doc.save("faaliyet.pdf");
+};
 
 function edit(i){
 alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
 }
 
 render();
+
 </script>
 </body>
 </html>
