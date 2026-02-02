@@ -302,35 +302,41 @@ render();
 updateBackupInfo();
 }
 
-// PDF Oluştur - 3 sütunlu A4
+// --- PDF 3 SÜTUNLU ---
 function exportPDF(){
-const { jsPDF } = window.jspdf;
-let doc = new jsPDF({unit:'pt',format:'a4'});
-let margin = 20;
-let pageWidth = doc.internal.pageSize.width - margin*2;
-let colWidth = pageWidth/3;
-let yStart = margin;
-let rowHeight = 80;
-let col = 0, y = yStart;
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF({unit:'pt', format:'a4'});
+    const margin = 20;
+    const pageWidth = doc.internal.pageSize.width - 2 * margin;
+    const pageHeight = doc.internal.pageSize.height - 2 * margin;
+    const colWidth = pageWidth / 3;
+    const rowHeight = 150;
 
-data.forEach((r,i)=>{
-let x = margin + col*colWidth;
-if(r.imgs[0]){
-doc.addImage(r.imgs[0],'JPEG',x,y, colWidth-10, rowHeight-20);
-}
-doc.text(formatDate(r.date)+" "+r.desc, x, y + rowHeight - 5, {maxWidth: colWidth-10});
-col++;
-if(col>2){
-col = 0;
-y += rowHeight;
-if(y + rowHeight > doc.internal.pageSize.height - margin){
-doc.addPage();
-y = yStart;
-}
-}
-});
+    let x = margin;
+    let y = margin;
+    let col = 0;
 
-doc.save("faaliyet.pdf");
+    data.forEach((r, i) => {
+        if(r.imgs[0]){
+            doc.addImage(r.imgs[0], 'JPEG', x, y, colWidth - 10, rowHeight - 30);
+        }
+        doc.text(formatDate(r.date) + " " + r.desc, x, y + rowHeight - 10, { maxWidth: colWidth - 10 });
+
+        col++;
+        x = margin + col * colWidth;
+
+        if(col > 2){
+            col = 0;
+            x = margin;
+            y += rowHeight;
+            if(y + rowHeight > pageHeight + margin){
+                doc.addPage();
+                y = margin;
+            }
+        }
+    });
+
+    doc.save("faaliyet.pdf");
 }
 
 function edit(i){
@@ -338,7 +344,6 @@ alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
 }
 
 render();
-
 </script>
 </body>
 </html>
