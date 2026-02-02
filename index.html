@@ -5,10 +5,9 @@
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-*{box-sizing:border-box;font-family:sans-serif}
-body{margin:0;padding:0;background:#111;color:#fff;font-size:16px}
-input,textarea,button{width:100%;padding:8px;margin:5px 0}
-button{cursor:pointer}
+body{font-family:sans-serif;background:#111;color:#fff;margin:0;padding:0;}
+input,textarea,button{width:100%;margin:5px 0;padding:8px;}
+button{cursor:pointer;}
 .card{background:#222;margin:5px;padding:10px;border-radius:8px;}
 .card img{width:100px;height:100px;margin-right:5px;object-fit:cover;}
 </style>
@@ -36,20 +35,26 @@ button{cursor:pointer}
 </section>
 
 <script>
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxLgR4Hb-VFRX6u98i0q0YKeqGfePDmRdpEeC3iMwnwVy-CKqx_ppLkKNmgHyYWmTCI0w/exec";
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbz7ZCgd7Lw7KnN_R6ckz-AKxUivBC2_EFtdh9ADsMx6q8mfHR_kN839f3bpg3gNA0b1Gw/exec";
 
+// E-Tablodan verileri çek
 async function fetchData(){
-  const res = await fetch(DEPLOY_URL);
-  const data = await res.json();
-  render(data);
+  try{
+    const res = await fetch(DEPLOY_URL);
+    const data = await res.json();
+    render(data);
+  } catch(e){
+    console.error("Veri çekme hatası", e);
+  }
 }
 
+// Kayıtları göster
 function render(data){
   const container = document.getElementById("cardsContainer");
   container.innerHTML = "";
   data.forEach((r,i)=>{
     const card = document.createElement("div");
-    card.className = "card";
+    card.className="card";
     card.innerHTML = `
       <div><strong>${r.tarih}</strong></div>
       <div>${r.aciklama}</div>
@@ -70,6 +75,7 @@ function readFile(file){
   });
 }
 
+// Kaydet butonu
 document.getElementById("saveBtn").addEventListener("click", async ()=>{
   const tarih = document.getElementById("date").value;
   const desc = document.getElementById("desc").value;
@@ -78,23 +84,26 @@ document.getElementById("saveBtn").addEventListener("click", async ()=>{
 
   if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
 
-  fetch(DEPLOY_URL, {
+  fetch(DEPLOY_URL,{
     method:"POST",
     headers:{"Content-Type":"application/json"},
     body: JSON.stringify({tarih, aciklama:desc, resim1:img1, resim2:img2})
-  }).then(res=>res.json()).then(res=>{
+  })
+  .then(res=>res.json())
+  .then(res=>{
     if(res.status==="success"){
       alert("Kaydedildi!");
       document.getElementById("date").value="";
       document.getElementById("desc").value="";
       document.getElementById("img1").value="";
       document.getElementById("img2").value="";
-      fetchData(); // listeyi güncelle
+      fetchData(); // Listeyi güncelle
     } else alert("Hata: "+res.message);
-  }).catch(console.error);
+  })
+  .catch(console.error);
 });
 
-// İlk veri çek
+// Sayfa açılınca verileri çek
 fetchData();
 </script>
 
