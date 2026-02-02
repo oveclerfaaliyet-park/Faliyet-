@@ -4,26 +4,56 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<link rel="manifest" href="manifest.json">
+<script>
+if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js");}
+</script>
+
 <style>
-*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
-body{margin:0;background:#000;color:#fff;font-size:16px;}
-header{padding:10px;text-align:center;font-size:22px;font-weight:bold;}
-nav{display:flex;justify-content:space-around;background:#111;padding:10px;}
-nav button{padding:10px 15px;font-size:16px;}
-section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;}
-section.active{display:block;}
-input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px;}
-textarea{height:150px;}
+*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
+body{margin:0;overflow:hidden;background:#000;color:#fff}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
+#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
+#screensaver video{width:100%;height:100%;object-fit:cover}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px}
+nav button{padding:10px 15px;font-size:16px}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
+section.active{display:block}
+label{font-size:14px;opacity:.8}
+input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
+textarea{height:200px}
 .card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
-.card div{padding:10px;flex:1;position:relative;}
+.card div{padding:10px;flex:1;position:relative}
 .iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
-.iconbar span{cursor:pointer;}
-#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;}
+.iconbar span{cursor:pointer}
+.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
+.trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
+#detail{padding:10px;background:#fff;color:#000;}
+#detail img{width:30%;margin-top:25px;margin-right:1%;}
+#detail .text{padding:5px;font-size:18px;margin-top:5px;}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
+body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
+body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
+body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
 </style>
 </head>
-<body>
+<body class="home-bg">
+
+<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
+<source src="acilis.mp4" type="video/mp4">
+</video>
+
+<div id="screensaver">
+<video autoplay muted loop>
+<source src="acilis.mp4" type="video/mp4">
+</video>
+</div>
+
 <header>PARK FAALİYET</header>
+
 <nav>
 <button onclick="show('home')">Ana</button>
 <button onclick="show('add')">Yeni</button>
@@ -39,99 +69,89 @@ textarea{height:150px;}
 <h3>Yeni Kayıt</h3>
 <label>Tarih</label>
 <input type="date" id="date">
-<label>Resim 1</label>
 <input type="file" id="img1" accept="image/*">
-<label>Resim 2</label>
 <input type="file" id="img2" accept="image/*">
-<label>Açıklama</label>
 <textarea id="desc" placeholder="Açıklama"></textarea>
 <button id="saveBtn">Kaydet</button>
 </section>
 
+<section id="detail"></section>
+
 <section id="settings">
-<h3>PDF / ZIP / Yedek</h3>
-<label>Başlangıç Tarihi</label>
-<input type="date" id="s1">
-<label>Bitiş Tarihi</label>
-<input type="date" id="s2">
-<button id="pdfExport">PDF Oluştur</button>
-<button id="zipExport">ZIP Dışa Aktar</button>
-<input type="file" id="zipInput">
-<button id="zipImport">ZIP İçe Aktar</button>
+<h3>Çöp Kutusu</h3>
+<button onclick="showTrash()">Çöp Kutusunu Aç</button>
+<div id="trash"></div>
 </section>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
 <script>
-let data=[];
+let data = [];
+let trash = [];
+let lastSave=0;
+let DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyg_9V_d5SQd2EQ7qSBZWuXgaCHo5Rg72Arwm3BaPcICjTJ2YowRccfTmWmi_M_NXPwEQ/exec";
+
+// --- Yardımcı Fonksiyon ---
+function resetIdle(){screensaver.style.display="none";}
+document.onclick=resetIdle;
+
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-if(id=='home') render();
+document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
+if(id=="home") render();
 }
 
-function render(){
-let container=document.getElementById("cardsContainer");
-container.innerHTML="";
-data.forEach((r,i)=>{
-let c=document.createElement("div");
-c.className="card";
-c.innerHTML=`<img src="${r.resim1||''}"><div><b>${r.tarih}</b><br>${r.aciklama}<div class="iconbar"><span onclick="edit(${i})">✏️</span></div></div>`;
-container.appendChild(c);
-});
+function formatDate(trDate){
+let d=new Date(trDate);
+return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
 
-function filter(text){
-document.querySelectorAll(".card").forEach(c=>{
-c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
-});
+// --- Dosya okuma ---
+function readFile(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){resolve(""); return;}
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
 }
 
+// --- Kaydet ---
 document.getElementById('saveBtn').addEventListener('click', async function(){
-let tarih=document.getElementById('date').value;
-let desc=document.getElementById('desc').value;
-let img1=document.getElementById('img1').files[0];
-let img2=document.getElementById('img2').files[0];
-if(!tarih||!desc){alert("Tarih ve açıklama gerekli!");return;}
+  if(Date.now()-lastSave<2000)return;
+  lastSave=Date.now();
 
-let readFile= (file)=> new Promise((res,rej)=>{
-if(!file){res("");return;}
-let r=new FileReader();
-r.onload=e=>res(e.target.result);
-r.onerror=err=>rej(err);
-r.readAsDataURL(file);
+  let tarih = document.getElementById('date').value;
+  let desc = document.getElementById('desc').value;
+  let resim1 = await readFile(document.getElementById('img1').files[0]);
+  let resim2 = await readFile(document.getElementById('img2').files[0]);
+
+  if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
+
+  fetch(DEPLOY_URL, {
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body: JSON.stringify({tarih, aciklama:desc, resim1, resim2})
+  })
+  .then(res=>res.json())
+  .then(res=>{
+    if(res.status==="success"){
+      alert("Kaydedildi!");
+      document.getElementById('date').value="";
+      document.getElementById('desc').value="";
+      document.getElementById('img1').value="";
+      document.getElementById('img2').value="";
+    } else {
+      alert("Hata: "+res.message);
+    }
+  }).catch(console.error);
 });
 
-let r={tarih,aciklama:desc,resim1:await readFile(img1),resim2:await readFile(img2)};
-data.push(r);
-render();
-document.getElementById('date').value="";
-document.getElementById('desc').value="";
-document.getElementById('img1').value="";
-document.getElementById('img2').value="";
+// --- Render / Arama ---
+function render(){ /* Kartları burada oluşturabilirsin, E-Tablodan çekme opsiyonel */ }
+function filter(text){}
 
-// --- E-Tabloya Gönder ---
-fetch("https://script.google.com/macros/s/AKfycbwiNde5DiLuKsmZa84dDy_fLtEQQ22hN4qJb4QFuQHGXnOlAXykge1QA6QOypIw3HqV/exec", {
-method: "POST",
-headers: {"Content-Type":"application/json"},
-body: JSON.stringify(r)
-}).then(res=>res.json()).then(console.log).catch(console.error);
-});
-
-document.getElementById('pdfExport').addEventListener('click',()=>{
-const { jsPDF } = window.jspdf;
-let doc = new jsPDF('p','mm','a4');
-let colX=[10,70,130];
-let y=10,rowH=55;
-data.forEach((r,i)=>{
-let col=colX[i%3];
-if(i>0 && i%3===0) y+=rowH;
-if(r.resim1) doc.addImage(r.resim1,'JPEG',col,y,55,35);
-doc.text(r.tarih+" "+r.aciklama,col,y+40);
-});
-doc.save("faaliyet.pdf");
-});
+function showTrash(){}
 </script>
 </body>
 </html>
