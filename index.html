@@ -87,7 +87,9 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 let data = [];
 let trash = [];
 let lastSave=0;
-let DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyg_9V_d5SQd2EQ7qSBZWuXgaCHo5Rg72Arwm3BaPcICjTJ2YowRccfTmWmi_M_NXPwEQ/exec";
+
+// **Yeni dağıtım URL’niz**
+let DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxKIVZEkKWNguUY8CWmdc_poxJA5HA_RzboKZq8JmhFW7Hqfk6cQxzN8m2eD6lgsyZ-MA/exec";
 
 // --- Yardımcı Fonksiyon ---
 function resetIdle(){screensaver.style.display="none";}
@@ -148,10 +150,10 @@ document.getElementById('saveBtn').addEventListener('click', async function(){
 });
 
 // --- Render / Arama ---
-function render(){ /* Kartları burada oluşturabilirsin, E-Tablodan çekme opsiyonel */ }
-function filter(text){}
+function render(){ /* Kartları burada oluşturabilirsin */ }
+function filter(text){ /* Arama filtreleme */ }
+function showTrash(){ /* Çöp kutusu */ }
 
-function showTrash(){}
 </script>
 </body>
 </html>
