@@ -7,7 +7,7 @@
 <link rel="manifest" href="manifest.json">
 <script>
 if("serviceWorker" in navigator){
-    navigator.serviceWorker.register("sw.js");
+  navigator.serviceWorker.register("sw.js");
 }
 </script>
 <style>
@@ -19,48 +19,61 @@ nav button{padding:10px 15px;font-size:16px;}
 section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;}
 section.active{display:block;}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px;}
-textarea{height:150px;}
-.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;color:#fff;}
-.card img{width:100px;height:100px;object-fit:cover;margin-right:6px;}
-.card div{flex:1;padding:6px;}
+textarea{height:200px;}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
+.card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
+.card div{padding:10px;flex:1;position:relative;}
+.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
+.iconbar span{cursor:pointer;}
+#detail{padding:10px;background:#fff;color:#000;}
+#detail img{width:30%;margin-top:25px;margin-right:1%;}
+#detail .text{padding:5px;font-size:18px;margin-top:5px;}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;}
 </style>
 </head>
 <body>
-<header>PARK FAALİYET</header>
 
+<header>PARK FAALİYET</header>
 <nav>
 <button onclick="show('home')">Ana</button>
-<button onclick="show('add')">Yeni Kayıt</button>
+<button onclick="show('add')">Yeni</button>
+<button onclick="show('settings')">Ayarlar</button>
 </nav>
 
 <section id="home" class="active">
-<div id="cardsContainer">Yükleniyor...</div>
+<input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">
+<div id="cardsContainer" style="overflow-y:auto;max-height:calc(100vh-150px)"></div>
 </section>
 
 <section id="add">
 <h3>Yeni Kayıt</h3>
 <label>Tarih</label>
 <input type="date" id="date">
-<label>Açıklama</label>
-<textarea id="desc"></textarea>
-<label>Resim 1</label>
 <input type="file" id="img1" accept="image/*">
-<label>Resim 2</label>
 <input type="file" id="img2" accept="image/*">
+<textarea id="desc" placeholder="Açıklama"></textarea>
 <button id="saveBtn">Kaydet</button>
 </section>
 
-<script>
-// ✅ Yeni DEPLOY_URL senin verdiğin Apps Script URL’i
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxLgR4Hb-VFRX6u98i0q0YKeqGfePDmRdpEeC3iMwnwVy-CKqx_ppLkKNmgHyYWmTCI0w/exec";
+<section id="settings">
+<h3>Ayarlar</h3>
+<p>Şimdilik boş</p>
+</section>
 
+<script>
+// **Google Apps Script Web App URL**
+let DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxrLZEg8icXGcnmq8yVYKsUsKgVrTYfXUdkbknP3y_YA7nMbo9S5WgPqNM68FwgI5M86w/exec";
+
+let data = [];
+
+// Yardımcı fonksiyon
 function show(id){
   document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  if(id==="home") loadRecords();
+  if(id=="home") fetchData();
 }
 
-// Dosya okuma
+// Dosya okuma (base64)
 function readFile(file){
   return new Promise((resolve,reject)=>{
     if(!file){resolve(""); return;}
@@ -71,7 +84,7 @@ function readFile(file){
   });
 }
 
-// Kaydet
+// Kaydetme
 document.getElementById('saveBtn').addEventListener('click', async function(){
   let tarih = document.getElementById('date').value;
   let desc = document.getElementById('desc').value;
@@ -93,39 +106,49 @@ document.getElementById('saveBtn').addEventListener('click', async function(){
       document.getElementById('desc').value="";
       document.getElementById('img1').value="";
       document.getElementById('img2').value="";
-      show('home');
     } else {
       alert("Hata: "+res.message);
     }
   }).catch(console.error);
 });
 
-// E-Tablodan veri çek
-async function loadRecords(){
-  const container = document.getElementById("cardsContainer");
-  container.innerHTML="Yükleniyor...";
-  try{
-    const res = await fetch(DEPLOY_URL + "?action=get");
-    const data = await res.json();
-    if(data.length===0){container.innerHTML="Kayıt yok"; return;}
-    container.innerHTML="";
-    data.forEach((r)=>{
-      let card = document.createElement("div");
-      card.className="card";
-      card.innerHTML=`
-        <div>${r.resim1?`<img src="${r.resim1}">`:''}${r.resim2?`<img src="${r.resim2}">`:''}</div>
-        <div>${r.tarih}</div>
-        <div>${r.aciklama}</div>
-      `;
-      container.appendChild(card);
-    });
-  }catch(err){
-    container.innerHTML="Veri yüklenemedi.";
-    console.error(err);
-  }
+// GET ile veri çekme ve render
+function fetchData(){
+  fetch(DEPLOY_URL)
+  .then(res=>res.json())
+  .then(res=>{
+    data = res;
+    render();
+  }).catch(console.error);
 }
 
-window.onload = ()=>{show('home');};
+function render(){
+  let html = "";
+  data.forEach((r,i)=>{
+    html += `<div class="card">
+      <div>${r.tarih}</div>
+      <div>${r.aciklama}</div>
+      ${r.resim1?`<img src="${r.resim1}">`:""}
+      ${r.resim2?`<img src="${r.resim2}">`:""}
+    </div>`;
+  });
+  document.getElementById("cardsContainer").innerHTML = html;
+}
+
+function filter(text){
+  text = text.toLowerCase();
+  let filtered = data.filter(r => r.tarih.toLowerCase().includes(text) || r.aciklama.toLowerCase().includes(text));
+  let html = "";
+  filtered.forEach(r=>{
+    html += `<div class="card">
+      <div>${r.tarih}</div>
+      <div>${r.aciklama}</div>
+      ${r.resim1?`<img src="${r.resim1}">`:""}
+      ${r.resim2?`<img src="${r.resim2}">`:""}
+    </div>`;
+  });
+  document.getElementById("cardsContainer").innerHTML = html;
+}
 </script>
 </body>
 </html>
