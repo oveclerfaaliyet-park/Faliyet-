@@ -1,17 +1,7 @@
-self.addEventListener('install', e=>{
-  e.waitUntil(
-    caches.open('park-cache').then(cache=>{
-      return cache.addAll([
-        './',
-        './index.html',
-        './manifest.json'
-      ]);
-    })
-  );
+self.addEventListener('install', function(e){
+  console.log('Service Worker kuruldu');
 });
 
-self.addEventListener('fetch', e=>{
-  e.respondWith(
-    caches.match(e.request).then(resp=>resp || fetch(e.request))
-  );
+self.addEventListener('fetch', function(e){
+  e.respondWith(fetch(e.request).catch(()=>caches.match(e.request)));
 });
