@@ -15,7 +15,7 @@ if("serviceWorker" in navigator){
 <style>
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;overflow:hidden;background:#000;color:#fff}
-video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4;transition:opacity 0.3s}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:100;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
@@ -58,7 +58,7 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </video>
 
 <div id="screensaver">
-<video autoplay muted loop>
+<video autoplay muted loop id="screensaverVideo">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 </div>
@@ -113,228 +113,217 @@ let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 let idleTimer;
-let screensaverVisible=false;
+let screensaverActive=false;
+
+const screensaverEl = document.getElementById('screensaver');
+const screensaverVideo = document.getElementById('screensaverVideo');
 
 function resetIdle(){
-clearTimeout(idleTimer);
-hideScreensaver();
-idleTimer=setTimeout(showScreensaver,15000);
+  clearTimeout(idleTimer);
+  if(screensaverActive){
+    screensaverEl.style.display='none';
+    screensaverVideo.pause();
+    screensaverActive=false;
+  }
+  idleTimer=setTimeout(showScreensaver,15000);
 }
 document.onclick=resetIdle;
+document.onmousemove=resetIdle;
 document.onkeydown=resetIdle;
-document.ontouchstart=resetIdle;
 resetIdle();
 
 function showScreensaver(){
-screensaver.style.display='block';
-document.querySelector(".bg").style.opacity='0';
-screensaverVisible=true;
-}
-
-function hideScreensaver(){
-if(screensaverVisible){
-screensaver.style.display='none';
-document.querySelector(".bg").style.opacity='0.4';
-screensaverVisible=false;
-}
+  screensaverEl.style.display='block';
+  screensaverVideo.play();
+  screensaverActive=true;
 }
 
 function show(id){
-document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
-document.getElementById(id).classList.add("active");
-document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
-if(id=="home") render();
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
+  if(id=="home") render();
 }
 
+// --- Kayıt ve listeleme fonksiyonları ---
 function formatDate(trDate){
-let d=new Date(trDate);
-return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
+  let d=new Date(trDate);
+  return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
 
 document.getElementById('saveBtn').addEventListener('click', save);
 
 function save(){
-if(Date.now()-lastSave<2000)return;
-lastSave=Date.now();
-
-if(!date.value){alert("Tarih seçiniz");return;}
-if(!desc.value){alert("Açıklama giriniz");return;}
-let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
-
-if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
-
-let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
-if(filesToRead>0){
-files.forEach(f=>{
-if(f.files[0]){
-let reader=new FileReader();
-reader.onload=e=>{
-r.imgs.push(e.target.result);
-loaded++;
-if(loaded===filesToRead){
-data.push(r);
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-img1.value="";img2.value="";desc.value="";date.value="";
-updateBackupInfo();
-render();
-}
-};
-reader.readAsDataURL(f.files[0]);
-}
-});
-}else{
-data.push(r);
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-desc.value="";date.value="";
-updateBackupInfo();
-render();
-}
+  if(Date.now()-lastSave<2000) return;
+  lastSave=Date.now();
+  if(!date.value){alert("Tarih seçiniz");return;}
+  if(!desc.value){alert("Açıklama giriniz");return;}
+  let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
+  if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
+  let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
+  if(filesToRead>0){
+    files.forEach(f=>{
+      if(f.files[0]){
+        let reader=new FileReader();
+        reader.onload=e=>{
+          r.imgs.push(e.target.result);
+          loaded++;
+          if(loaded===filesToRead){
+            data.push(r);
+            data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+            localStorage.setItem("records",JSON.stringify(data));
+            img1.value="";img2.value="";desc.value="";date.value="";
+            updateBackupInfo();
+            render();
+          }
+        };
+        reader.readAsDataURL(f.files[0]);
+      }
+    });
+  } else {
+    data.push(r);
+    data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+    localStorage.setItem("records",JSON.stringify(data));
+    desc.value="";date.value="";
+    updateBackupInfo();
+    render();
+  }
 }
 
 function updateBackupInfo(){
-let now=new Date();
-document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
+  let now=new Date();
+  document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
 }
 
 function render(){
-let container=document.getElementById("cardsContainer");
-container.innerHTML="";
-data.forEach((r,i)=>{
-let c=document.createElement("div");
-c.className="card";
-c.innerHTML=`<img src="${r.imgs[0]||''}">
-<div>
-<b>${formatDate(r.date)}</b><br>${r.desc}
-<div class="iconbar">
-<span onclick="edit(${i})">✏️</span>
-<span onclick="delRec(${i})">🗑️</span>
-</div>
-</div>`;
-c.onclick=(e)=>{if(!e.target.closest('.iconbar')) openDetail(i)};
-container.appendChild(c);
-});
+  let container=document.getElementById("cardsContainer");
+  container.innerHTML="";
+  data.forEach((r,i)=>{
+    let c=document.createElement("div");
+    c.className="card";
+    c.innerHTML=`<img src="${r.imgs[0]||''}">
+    <div>
+      <b>${formatDate(r.date)}</b><br>${r.desc}
+      <div class="iconbar">
+        <span onclick="edit(${i})">✏️</span>
+        <span onclick="delRec(${i})">🗑️</span>
+      </div>
+    </div>`;
+    c.onclick=(e)=>{if(!e.target.closest('.iconbar')) openDetail(i)};
+    container.appendChild(c);
+  });
 }
 
 function filter(text){
-document.querySelectorAll(".card").forEach(c=>{
-c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
-});
+  document.querySelectorAll(".card").forEach(c=>{
+    c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
+  });
 }
 
 function delRec(i){
-if(!confirm("Silmek istediğine emin misin?"))return;
-trash.push({...data[i],deleted:Date.now()});
-data.splice(i,1);
-localStorage.setItem("records",JSON.stringify(data));
-localStorage.setItem("trash",JSON.stringify(trash));
-render();
+  if(!confirm("Silmek istediğine emin misin?"))return;
+  trash.push({...data[i],deleted:Date.now()});
+  data.splice(i,1);
+  localStorage.setItem("records",JSON.stringify(data));
+  localStorage.setItem("trash",JSON.stringify(trash));
+  render();
 }
 
 function showTrash(){
-let html="";
-trash.forEach((t,i)=>{
-html+=`
-<div class="trashItem">
-<div>${formatDate(t.date)}<br>${t.desc}</div>
-<div class="trashIcons">
-<span onclick="restore(${i})">♻️</span>
-<span onclick="perma(${i})">🗑️</span>
-</div>
-</div>`;
-});
-document.getElementById("trash").innerHTML=html;
+  let html="";
+  trash.forEach((t,i)=>{
+    html+=`
+    <div class="trashItem">
+      <div>${formatDate(t.date)}<br>${t.desc}</div>
+      <div class="trashIcons">
+        <span onclick="restore(${i})">♻️</span>
+        <span onclick="perma(${i})">🗑️</span>
+      </div>
+    </div>`;
+  });
+  document.getElementById("trash").innerHTML=html;
 }
 
 function restore(i){
-data.push(trash[i]);
-trash.splice(i,1);
-localStorage.setItem("records",JSON.stringify(data));
-localStorage.setItem("trash",JSON.stringify(trash));
-showTrash();
+  data.push(trash[i]);
+  trash.splice(i,1);
+  localStorage.setItem("records",JSON.stringify(data));
+  localStorage.setItem("trash",JSON.stringify(trash));
+  showTrash();
 }
 
 function perma(i){
-if(!confirm("Kalıcı olarak silinsin mi?"))return;
-trash.splice(i,1);
-localStorage.setItem("trash",JSON.stringify(trash));
-showTrash();
+  if(!confirm("Kalıcı olarak silinsin mi?"))return;
+  trash.splice(i,1);
+  localStorage.setItem("trash",JSON.stringify(trash));
+  showTrash();
 }
 
 function openDetail(i){
-let r=data[i];
-detail.innerHTML="";
-detail.style.background="#fff";
-document.querySelector(".bg").style.display="none";
-r.imgs.forEach(img=>{
-let im=document.createElement("img");
-im.src=img;
-im.style.marginRight="1%";
-detail.appendChild(im);
-});
-let txt=document.createElement("div");
-txt.className="text";
-txt.style.marginTop="5px";
-txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
-detail.appendChild(txt);
-let btn=document.createElement("button");
-btn.innerText="Geri";
-btn.onclick=()=>{
-show('home');
-document.querySelector(".bg").style.display="block";
-};
-detail.appendChild(btn);
-show("detail");
+  let r=data[i];
+  detail.innerHTML="";
+  detail.style.background="#fff";
+  r.imgs.forEach(img=>{
+    let im=document.createElement("img");
+    im.src=img;
+    im.style.marginRight="1%";
+    detail.appendChild(im);
+  });
+  let txt=document.createElement("div");
+  txt.className="text";
+  txt.style.marginTop="5px";
+  txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
+  detail.appendChild(txt);
+  let btn=document.createElement("button");
+  btn.innerText="Geri";
+  btn.onclick=()=>{show('home')};
+  detail.appendChild(btn);
+  show("detail");
 }
 
 // ZIP Export/Import
 async function exportZip(){
-let s=s1.value,e=s2.value;
-let zip=new JSZip();
-data.filter(r=>r.date>=s&&r.date<=e)
-.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
-let blob=await zip.generateAsync({type:"blob"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download=`${s}_${e}.zip`;a.click();
+  let s=s1.value,e=s2.value;
+  let zip=new JSZip();
+  data.filter(r=>r.date>=s&&r.date<=e)
+    .forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
+  let blob=await zip.generateAsync({type:"blob"});
+  let a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download=`${s}_${e}.zip`;a.click();
 }
 
 async function importZip(){
-let file=zipInput.files[0];
-let zip=await JSZip.loadAsync(file);
-for(let f in zip.files){
-let txt=await zip.files[f].async("string");
-data.push(JSON.parse(txt));
-}
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-alert("Yüklendi");
-render();
-updateBackupInfo();
+  let file=zipInput.files[0];
+  let zip=await JSZip.loadAsync(file);
+  for(let f in zip.files){
+    let txt=await zip.files[f].async("string");
+    data.push(JSON.parse(txt));
+  }
+  data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+  localStorage.setItem("records",JSON.stringify(data));
+  alert("Yüklendi");
+  render();
+  updateBackupInfo();
 }
 
 // PDF Oluştur
 function exportPDF(){
-const { jsPDF } = window.jspdf;
-let doc = new jsPDF();
-let x=10, y=10;
-let rowHeight=50;
-data.forEach((r,i)=>{
-let col = i%2===0?10:105;
-if(i%2===0 && i!==0) y += rowHeight;
-if(r.imgs[0]){
-doc.addImage(r.imgs[0],'JPEG',col,y,90,40);
-}
-doc.text(formatDate(r.date)+" "+r.desc,col,y+45);
-if(i%2!==0) y += 5;
-});
-doc.save("faaliyet.pdf");
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+  let x=10, y=10;
+  let rowHeight=50;
+  data.forEach((r,i)=>{
+    let col = i%2===0?10:105;
+    if(i%2===0 && i!==0) y += rowHeight;
+    if(r.imgs[0]) doc.addImage(r.imgs[0],'JPEG',col,y,90,40);
+    doc.text(formatDate(r.date)+" "+r.desc,col,y+45);
+    if(i%2!==0) y += 5;
+  });
+  doc.save("faaliyet.pdf");
 }
 
-function edit(i){
-alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
-}
+function edit(i){alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");}
 
 render();
 </script>
