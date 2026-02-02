@@ -14,38 +14,37 @@ if("serviceWorker" in navigator){
 
 <style>
 *{box-sizing:border-box;font-family:Arial}
-body{margin:0;overflow:hidden;background:#000;color:#fff;position:relative}
-video.bg, #screensaver video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
+body{margin:0;overflow:hidden;background:#000;color:#fff}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
+#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
+#screensaver video{width:100%;height:100%;object-fit:cover}
 
-#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:1000;display:none}
-#screensaver video{width:100%;height:100%;object-fit:cover;opacity:1}
-
-header{padding:10px;text-align:center;font-size:22px;font-weight:bold;position:relative;z-index:2}
-nav{display:flex;justify-content:space-around;background:#111;padding:10px;position:relative;z-index:2}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px}
 nav button{padding:10px 15px;font-size:16px}
 
-section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;position:relative;z-index:2}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
 
 label{font-size:14px;opacity:.8}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
 
-.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;z-index:2}
-.card img{width:120px;height:120px;object-fit:cover;margin-right:4px}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
+.card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
 .card div{padding:10px;flex:1;position:relative}
 
-.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;z-index:2}
+.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
 .iconbar span{cursor:pointer}
 
-.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;z-index:2}
+.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
 .trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
 
-#detail{padding:10px;background:#fff;color:#000;position:relative;z-index:2}
+#detail{padding:10px;background:#fff;color:#000;}
 #detail img{width:48%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
-#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;position:relative;z-index:2}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
@@ -110,43 +109,42 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// --- VERİLER ---
+// --- KAYIT ve VERİLER ---
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
-let idleTimer;
-let videoActive=false;
 
 // --- EKRAN KORUYUCU ---
-function activateScreensaver(){
-  document.getElementById('screensaver').style.display='block';
-  document.getElementById('mainVideo').style.display='block';
-  // içerik kapalı
-  document.querySelectorAll('header, nav, section').forEach(e=>e.style.pointerEvents='none');
-  document.querySelectorAll('header, nav, section').forEach(e=>e.style.opacity=0);
-  videoActive=true;
-}
-function deactivateScreensaver(){
-  document.getElementById('screensaver').style.display='none';
-  document.getElementById('mainVideo').style.display='none';
-  // içerik açık
-  document.querySelectorAll('header, nav, section').forEach(e=>e.style.pointerEvents='auto');
-  document.querySelectorAll('header, nav, section').forEach(e=>e.style.opacity=1);
-  videoActive=false;
+let screensaverEl = document.getElementById("screensaver");
+let idleTimer;
+
+function showScreensaver(){
+  document.querySelectorAll("section, header, nav, .card, .iconbar, #detail").forEach(e=>{
+    e.style.pointerEvents="none";
+    e.style.opacity="0";
+  });
+  screensaverEl.style.display="block";
 }
 
-// --- BOŞTA KALMA ---
+function hideScreensaver(){
+  screensaverEl.style.display="none";
+  document.querySelectorAll("section, header, nav, .card, .iconbar, #detail").forEach(e=>{
+    e.style.pointerEvents="auto";
+    e.style.opacity="1";
+  });
+}
+
 function resetIdle(){
   clearTimeout(idleTimer);
-  if(videoActive) deactivateScreensaver();
-  idleTimer=setTimeout(()=>activateScreensaver(),15000); // 15 saniye boşta kalınca
+  hideScreensaver();
+  idleTimer = setTimeout(showScreensaver, 15000); // 15 saniye boşta kalınca ekran koruyucu aç
 }
-document.onclick=resetIdle;
-document.onkeydown=resetIdle;
-document.ontouchstart=resetIdle;
+
+document.addEventListener("click", resetIdle);
+document.addEventListener("touchstart", resetIdle);
 resetIdle();
 
-// --- SHOW ---
+// --- SHOW SECTION ---
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -154,7 +152,7 @@ document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
 if(id=="home") render();
 }
 
-// --- TARİH FORMAT ---
+// --- FORMAT TARİH ---
 function formatDate(trDate){
 let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
@@ -165,10 +163,13 @@ document.getElementById('saveBtn').addEventListener('click', save);
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
+
 if(!date.value){alert("Tarih seçiniz");return;}
 if(!desc.value){alert("Açıklama giriniz");return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
+
 if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
+
 let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
 if(filesToRead>0){
 files.forEach(f=>{
@@ -200,9 +201,9 @@ render();
 
 // --- Açılış videosu görünmez başta ---
 document.getElementById('mainVideo').style.display='none';
-document.getElementById('screensaver').style.display='none';
+}
 
-// --- BACKUP ---
+// --- BACKUP BİLGİ ---
 function updateBackupInfo(){
 let now=new Date();
 document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
@@ -228,14 +229,12 @@ container.appendChild(c);
 });
 }
 
-// --- FİLTRE ---
 function filter(text){
 document.querySelectorAll(".card").forEach(c=>{
 c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
 });
 }
 
-// --- SİLME ---
 function delRec(i){
 if(!confirm("Silmek istediğine emin misin?"))return;
 trash.push({...data[i],deleted:Date.now()});
@@ -301,7 +300,7 @@ detail.appendChild(btn);
 show("detail");
 }
 
-// --- ZIP ---
+// ZIP Export/Import
 async function exportZip(){
 let s=s1.value,e=s2.value;
 let zip=new JSZip();
@@ -327,7 +326,7 @@ render();
 updateBackupInfo();
 }
 
-// --- PDF ---
+// PDF Oluştur
 function exportPDF(){
 const { jsPDF } = window.jspdf;
 let doc = new jsPDF();
@@ -350,7 +349,6 @@ alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
 }
 
 render();
-
 </script>
 </body>
 </html>
