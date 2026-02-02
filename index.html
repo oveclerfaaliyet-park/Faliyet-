@@ -54,7 +54,9 @@ position:absolute;
 top:10px;right:10px;
 }
 
-.iconbar span{cursor:pointer;}
+.iconbar span{
+cursor:pointer;
+}
 
 .trashItem{
 display:flex;
@@ -126,12 +128,12 @@ cursor:pointer;
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP İçe Aktar</button>
 
-<h3>PDF Çıktı</h3>
-<button onclick="exportPDF()">PDF İndir</button>
-
 <h3>Çöp Kutusu</h3>
 <button onclick="showTrash()">Çöp Kutusunu Aç</button>
 <div id="trash"></div>
+
+<h3>PDF Oluştur</h3>
+<button onclick="exportPDF()">Seçili Aralıktaki Kayıtları PDF Yap</button>
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
@@ -293,58 +295,40 @@ detail.appendChild(btn);
 show("detail");
 }
 
-async function exportZip(){
-let s=s1.value,e=s2.value;
-let zip=new JSZip();
-data.filter(r=>r.date>=s&&r.date<=e)
-.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
-let blob=await zip.generateAsync({type:"blob"});
-let a=document.createElement("a");
-a.href=URL.createObjectURL(blob);
-a.download=`${s}_${e}.zip`;a.click();
+// PDF Özelliği
+async function exportPDF(){
+const { jsPDF } = window.jspdf;
+let s = s1.value, e = s2.value;
+if(!s || !e){alert("Başlangıç ve bitiş tarihlerini seçin"); return;}
+let filtered = data.filter(r=>r.date>=s && r.date<=e);
+if(filtered.length===0){alert("Bu aralıkta kayıt yok"); return;}
+let doc = new jsPDF('p','mm','a4');
+let pageHeight = doc.internal.pageSize.height;
+let yOffset = 10;
+let xOffset = 10;
+let colWidth = 90; // iki sütun için
+let count = 0;
+for(let r of filtered){
+let x = (count%2===0)?xOffset:xOffset+colWidth;
+let y = yOffset;
+if(count%2!==0) yOffset += 60; // sonraki satır için offset
+if(yOffset>pageHeight-50) { doc.addPage(); yOffset=10; } // yeni sayfa
+doc.setFontSize(10);
+doc.text(formatDate(r.date),x,y);
+doc.text(r.desc,x,y+5);
+if(r.imgs[0]){
+try{
+let imgData = r.imgs[0];
+doc.addImage(imgData,'JPEG',x,y+10,40,40);
+}catch(e){}
 }
-
-async function importZip(){
-let file=zipInput.files[0];
-let zip=await JSZip.loadAsync(file);
-for(let f in zip.files){
-let txt=await zip.files[f].async("string");
-data.push(JSON.parse(txt));
+count++;
 }
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-alert("Yüklendi");
-render();
-updateBackupInfo();
+doc.save("records.pdf");
 }
 
 function edit(i){
 alert("Düzenleme fonksiyonu istersen sonra ekleriz 😄");
-}
-
-// PDF İndir
-async function exportPDF(){
-const { jsPDF } = window.jspdf;
-let s=s1.value,e=s2.value;
-let filtered=data.filter(r=>r.date>=s && r.date<=e);
-if(filtered.length===0){alert("Bu tarihler arasında kayıt yok"); return;}
-let doc = new jsPDF('p','mm','a4');
-let x=10,y=10,w=90,h=50;
-let col=0;
-for(let i=0;i<filtered.length;i++){
-let r=filtered[i];
-// resim ekle
-for(let j=0;j<r.imgs.length;j++){
-if(j>1) break;
-let img=r.imgs[j];
-doc.addImage(img,'JPEG',x + (col*95),y,w,h);
-}
-doc.text(formatDate(r.date)+'\n'+r.desc,x + (col*95),y+h+5);
-col++;
-if(col>1){col=0;y+=h+20;}
-if(y>270){doc.addPage();y=10;}
-}
-doc.save(`faaliyet_${s}_${e}.pdf`);
 }
 
 render();
