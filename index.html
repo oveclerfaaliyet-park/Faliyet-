@@ -4,23 +4,26 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<script src="app.js" defer></script>
+<link rel="manifest" href="manifest.json">
+<script>
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js').then(()=>console.log("SW registered"));
+}
+</script>
 <style>
-*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
-body{margin:0;background:#000;color:#fff}
-header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
-nav{display:flex;justify-content:space-around;background:#111;padding:10px}
-nav button{padding:10px 15px;font-size:16px;cursor:pointer}
-section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
-section.active{display:block}
-label{font-size:14px;opacity:.8}
-input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
-textarea{height:150px}
-.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
-.card img{width:100px;height:100px;object-fit:cover;margin-right:4px;}
-.card div{padding:10px;flex:1;}
-#list{overflow-y:auto;max-height:calc(100vh-150px)}
-#addModal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.9);color:#fff;padding:20px;z-index:100;}
+*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;}
+body{margin:0;padding:0;background:#111;color:#fff;}
+header{padding:15px;text-align:center;font-size:22px;font-weight:bold;background:#222;}
+nav{display:flex;gap:10px;padding:10px;background:#111;}
+nav button{flex:1;padding:10px;font-size:16px;cursor:pointer;}
+section{padding:10px;display:none;}
+section.active{display:block;}
+label{display:block;margin-top:10px;}
+input,textarea,button{width:100%;margin-top:5px;padding:10px;font-size:16px;}
+textarea{height:120px;}
+.card{background:#222;padding:10px;margin:10px 0;border-radius:8px;cursor:pointer;}
+.card img{width:100px;height:100px;margin-right:5px;object-fit:cover;}
+#cardsContainer{max-height:400px;overflow-y:auto;}
 </style>
 </head>
 <body>
@@ -28,27 +31,98 @@ textarea{height:150px}
 <header>PARK FAALİYET</header>
 
 <nav>
-<button onclick="showSection('home')">Ana</button>
-<button onclick="openAdd()">Yeni</button>
+<button onclick="showSection('home')">Ana Sayfa</button>
+<button onclick="showSection('add')">Yeni Kayıt</button>
 </nav>
 
 <section id="home" class="active">
-<div id="list"></div>
+<h3>Kayıtlar</h3>
+<div id="cardsContainer"></div>
 </section>
 
-<div id="addModal">
+<section id="add">
 <h3>Yeni Kayıt</h3>
 <label>Tarih</label>
 <input type="date" id="date">
 <label>Açıklama</label>
-<textarea id="desc" placeholder="Açıklama"></textarea>
+<textarea id="desc"></textarea>
 <label>Resim 1</label>
 <input type="file" id="img1" accept="image/*">
 <label>Resim 2</label>
 <input type="file" id="img2" accept="image/*">
-<button onclick="saveRecord()">Kaydet</button>
-<button onclick="closeAdd()">Kapat</button>
-</div>
+<button id="saveBtn">Kaydet</button>
+</section>
+
+<script>
+// Sabit Apps Script URL
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxrLZEg8icXGcnmq8yVYKsUsKgVrTYfXUdkbknP3y_YA7nMbo9S5WgPqNM68FwgI5M86w/exec";
+let records = JSON.parse(localStorage.getItem("records") || "[]");
+
+function showSection(id){
+  document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  if(id==='home') render();
+}
+
+function readFile(file){
+  return new Promise((resolve,reject)=>{
+    if(!file){resolve(""); return;}
+    const reader = new FileReader();
+    reader.onload=e=>resolve(e.target.result);
+    reader.onerror=err=>reject(err);
+    reader.readAsDataURL(file);
+  });
+}
+
+async function saveRecord(){
+  let tarih=document.getElementById('date').value;
+  let desc=document.getElementById('desc').value;
+  let resim1=await readFile(document.getElementById('img1').files[0]);
+  let resim2=await readFile(document.getElementById('img2').files[0]);
+
+  if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
+
+  let record = {tarih, aciklama:desc, resim1, resim2};
+  records.push(record);
+  localStorage.setItem("records",JSON.stringify(records));
+  render();
+  alert("Kaydedildi! (LocalStorage ve Sheet’e gönderildi)");
+
+  fetch(DEPLOY_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify(record)
+  })
+  .then(res=>res.json())
+  .then(res=>{
+    if(res.status!=="success") console.error("Sheet Hatası:", res.message);
+  })
+  .catch(console.error);
+
+  // Formu temizle
+  document.getElementById('date').value="";
+  document.getElementById('desc').value="";
+  document.getElementById('img1').value="";
+  document.getElementById('img2').value="";
+}
+
+function render(){
+  const container=document.getElementById('cardsContainer');
+  container.innerHTML="";
+  records.forEach((r)=>{
+    const div=document.createElement('div');
+    div.className="card";
+    div.innerHTML=`<strong>${r.tarih}</strong><br>${r.aciklama}<br>
+      ${r.resim1?`<img src="${r.resim1}">`:''}
+      ${r.resim2?`<img src="${r.resim2}">`:''}
+    `;
+    container.appendChild(div);
+  });
+}
+
+document.getElementById('saveBtn').addEventListener('click', saveRecord);
+render();
+</script>
 
 </body>
 </html>
