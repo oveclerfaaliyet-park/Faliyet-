@@ -15,7 +15,7 @@ if("serviceWorker" in navigator){
 <style>
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;overflow:hidden;background:#000;color:#fff}
-video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4;display:none;}
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
@@ -53,7 +53,7 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </head>
 <body class="home-bg">
 
-<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
+<video class="bg" autoplay muted loop id="mainVideo">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
@@ -109,19 +109,25 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// --- KAYIT ve VERİLER ---
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 let idleTimer;
 
+let video = document.getElementById('mainVideo');
+video.style.display='none';
+
 function resetIdle(){
 clearTimeout(idleTimer);
-screensaver.style.display="none";
-idleTimer=setTimeout(()=>screensaver.style.display="block",15000); // 15 saniye sonra video devreye giriyor
+video.style.display='none';
+idleTimer=setTimeout(()=>{ video.style.display='block'; },15000); // 15 saniye sonra video devreye giriyor
 }
-document.onclick=resetIdle;resetIdle();
+document.onclick=resetIdle;
+document.onmousemove=resetIdle;
+document.onkeydown=resetIdle;
+resetIdle();
 
+// --- SHOW SECTION ---
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -129,23 +135,21 @@ document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
 if(id=="home") render();
 }
 
+// --- FORMAT DATE ---
 function formatDate(trDate){
 let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
 
-// --- KAYDET ---
+// --- SAVE ---
 document.getElementById('saveBtn').addEventListener('click', save);
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
-
 if(!date.value){alert("Tarih seçiniz");return;}
 if(!desc.value){alert("Açıklama giriniz");return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
-
 if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
-
 let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
 if(filesToRead>0){
 files.forEach(f=>{
@@ -175,11 +179,11 @@ updateBackupInfo();
 render();
 }
 
-// --- Açılış videosu görünmez başta ---
-document.getElementById('mainVideo').style.display='none';
+// Videoyi gizle kullanıcı kullanınca
+video.style.display='none';
 }
 
-// --- BACKUP BİLGİ ---
+// --- BACKUP INFO ---
 function updateBackupInfo(){
 let now=new Date();
 document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
