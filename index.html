@@ -15,14 +15,8 @@ if("serviceWorker" in navigator){
 <style>
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;overflow:hidden;background:#000;color:#fff}
-video.bg{
-position:fixed;top:0;left:0;width:100%;height:100%;
-object-fit:cover;z-index:-2;opacity:.4;
-}
-#screensaver{
-position:fixed;top:0;left:0;width:100%;height:100%;
-background:black;z-index:10;display:none;
-}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
+#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
 header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
@@ -33,62 +27,37 @@ section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
 
 label{font-size:14px;opacity:.8}
-
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
 
-.card{
-display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;
-cursor:pointer;
-}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
 .card div{padding:10px;flex:1;position:relative}
 
-.iconbar{
-display:flex;
-gap:15px;
-margin-top:10px;
-font-size:20px;
-justify-content:flex-end;
-position:absolute;
-top:10px;right:10px;
-}
+.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
+.iconbar span{cursor:pointer}
 
-.iconbar span{
-cursor:pointer;
-}
-
-.trashItem{
-display:flex;
-justify-content:space-between;
-align-items:center;
-background:#222;
-margin:6px 0;
-padding:8px;
-border-radius:8px;
-}
-
-.trashIcons span{
-font-size:20px;
-margin-left:10px;
-cursor:pointer;
-}
+.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
+.trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
 
 #detail{padding:10px;background:#fff;color:#000;}
 #detail img{width:48%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
+
+/* Arka plan görselleri */
+body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
+body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
+body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
 </style>
 </head>
-<body>
+<body class="home-bg">
 
-<!-- Ana arka plan videosu -->
-<video id="mainVideo" class="bg" autoplay muted loop>
+<video class="bg" autoplay muted loop id="mainVideo">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
-<!-- Ekran koruyucu video -->
 <div id="screensaver">
 <video autoplay muted loop>
 <source src="acilis.mp4" type="video/mp4">
@@ -105,21 +74,22 @@ cursor:pointer;
 
 <section id="home" class="active">
 <input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">
+<div id="cardsContainer" style="overflow-y:auto;max-height:calc(100vh-150px)"></div>
 </section>
 
-<section id="add" style="background-image:url('pexels-eberhardgross-1301976.jpg');background-size:cover;">
+<section id="add">
 <h3>Yeni Kayıt</h3>
 <label>Tarih</label>
 <input type="date" id="date">
 <input type="file" id="img1" accept="image/*">
 <input type="file" id="img2" accept="image/*">
 <textarea id="desc" placeholder="Açıklama"></textarea>
-<button onclick="save()">Kaydet</button>
+<button id="saveBtn">Kaydet</button>
 </section>
 
 <section id="detail"></section>
 
-<section id="settings" style="background-image:url('pexels-skylar-kang-6044198.jpg');background-size:cover;">
+<section id="settings">
 <h3>Yedek</h3>
 <div id="backupInfo" style="margin-bottom:10px;">Son yedekleme: -</div>
 <label>Başlangıç Tarihi</label>
@@ -129,6 +99,7 @@ cursor:pointer;
 <button onclick="exportZip()">ZIP Dışa Aktar</button>
 <input type="file" id="zipInput">
 <button onclick="importZip()">ZIP İçe Aktar</button>
+<button onclick="exportPDF()">PDF Oluştur</button>
 
 <h3>Çöp Kutusu</h3>
 <button onclick="showTrash()">Çöp Kutusunu Aç</button>
@@ -136,47 +107,25 @@ cursor:pointer;
 </section>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
 <script>
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 let idleTimer;
 
-// Açılış videosu (7 saniye) ve sonra uygulama açılıyor
-const mainVideoEl = document.getElementById('mainVideo');
-const screensaverEl = document.getElementById('screensaver');
-document.body.style.visibility='hidden';
-mainVideoEl.style.display='block';
-mainVideoEl.play();
-setTimeout(()=>{
-    document.body.style.visibility='visible';
-    mainVideoEl.style.display='block';
-    mainVideoEl.loop=true;
-    mainVideoEl.muted=true;
-    mainVideoEl.play();
-    show('home');
-},7000);
-
-// Ekran koruyucu video (20 saniye hareketsizlik)
 function resetIdle(){
-    clearTimeout(idleTimer);
-    screensaverEl.style.display="none";
-    mainVideoEl.style.display="block";
-    idleTimer=setTimeout(()=>{
-        screensaverEl.style.display="block";
-        screensaverEl.querySelector('video').play();
-        mainVideoEl.style.display="none";
-    },20000);
+clearTimeout(idleTimer);
+screensaver.style.display="none";
+idleTimer=setTimeout(()=>screensaver.style.display="block",15000);
 }
-document.onclick=resetIdle;
-document.onmousemove=resetIdle;
-document.ontouchstart=resetIdle;
-resetIdle();
+document.onclick=resetIdle;resetIdle();
 
-// Tüm eski fonksiyonlar değişmeden korunuyor
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
+document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
 if(id=="home") render();
 }
 
@@ -184,6 +133,8 @@ function formatDate(trDate){
 let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
+
+document.getElementById('saveBtn').addEventListener('click', save);
 
 function save(){
 if(Date.now()-lastSave<2000)return;
@@ -195,14 +146,15 @@ let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
 
 if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
 
-let files=[img1,img2],loaded=0;
+let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
+if(filesToRead>0){
 files.forEach(f=>{
 if(f.files[0]){
 let reader=new FileReader();
 reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
-if(loaded===files.filter(f=>f.files[0]).length){
+if(loaded===filesToRead){
 data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
@@ -214,7 +166,7 @@ render();
 reader.readAsDataURL(f.files[0]);
 }
 });
-if(loaded===0){
+}else{
 data.push(r);
 data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
@@ -230,7 +182,8 @@ document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+
 }
 
 function render(){
-home.innerHTML=`<input type="text" id="searchBox" placeholder="Ara..." oninput="filter(this.value)">`;
+let container=document.getElementById("cardsContainer");
+container.innerHTML="";
 data.forEach((r,i)=>{
 let c=document.createElement("div");
 c.className="card";
@@ -243,12 +196,12 @@ c.innerHTML=`<img src="${r.imgs[0]||''}">
 </div>
 </div>`;
 c.onclick=(e)=>{if(!e.target.closest('.iconbar')) openDetail(i)};
-home.appendChild(c);
+container.appendChild(c);
 });
 }
 
 function filter(text){
-home.querySelectorAll(".card").forEach(c=>{
+document.querySelectorAll(".card").forEach(c=>{
 c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
 });
 }
@@ -318,6 +271,7 @@ detail.appendChild(btn);
 show("detail");
 }
 
+// ZIP Export/Import
 async function exportZip(){
 let s=s1.value,e=s2.value;
 let zip=new JSZip();
@@ -343,8 +297,26 @@ render();
 updateBackupInfo();
 }
 
+// PDF Oluştur
+function exportPDF(){
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF();
+let x=10, y=10;
+let rowHeight=50;
+data.forEach((r,i)=>{
+let col = i%2===0?10:105;
+if(i%2===0 && i!==0) y += rowHeight;
+if(r.imgs[0]){
+doc.addImage(r.imgs[0],'JPEG',col,y,90,40);
+}
+doc.text(formatDate(r.date)+" "+r.desc,col,y+45);
+if(i%2!==0) y += 5;
+});
+doc.save("faaliyet.pdf");
+}
+
 function edit(i){
-alert("Düzenleme fonksiyonu istersen sonra ekleriz 😄");
+alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
 }
 
 render();
