@@ -4,37 +4,48 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="manifest" href="manifest.json">
 <script>
 if("serviceWorker" in navigator){
   navigator.serviceWorker.register("sw.js");
 }
 </script>
+
 <style>
-*{box-sizing:border-box;font-family:Arial, sans-serif}
+*{box-sizing:border-box;font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif}
 body{margin:0;overflow:hidden;background:#000;color:#fff}
 video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
+
 header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
 nav{display:flex;justify-content:space-around;background:#111;padding:10px}
 nav button{padding:10px 15px;font-size:16px}
+
 section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
+
 label{font-size:14px;opacity:.8}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
+
 .card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
 .card div{padding:10px;flex:1;position:relative}
+
 .iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
 .iconbar span{cursor:pointer}
+
 .trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
 .trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
+
 #detail{padding:10px;background:#fff;color:#000;}
-#detail img{width:48%;margin-top:25px;margin-right:1%;}
+#detail img{width:30%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
+
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
+
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
 body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
@@ -84,10 +95,11 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <input type="date" id="s1">
 <label>Bitiş Tarihi</label>
 <input type="date" id="s2">
-<button id="exportZipBtn">ZIP Dışa Aktar</button>
+<button id="zipExport">ZIP Dışa Aktar</button>
 <input type="file" id="zipInput">
-<button id="importZipBtn">ZIP İçe Aktar</button>
-<button id="exportPDFBtn">PDF Oluştur</button>
+<button id="zipImport">ZIP İçe Aktar</button>
+<button id="pdfExport">PDF Oluştur</button>
+
 <h3>Çöp Kutusu</h3>
 <button onclick="showTrash()">Çöp Kutusunu Aç</button>
 <div id="trash"></div>
@@ -97,14 +109,12 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-const SHEET_URL = "https://script.google.com/macros/s/AKfycbxSO4tLfEmmKLAztLD9ZbRjgtDvm6bXZ9Y37sJH2SpNYqX_NSQOysFfvaTrYeajX4-h4g/exec";
-let data = [];
-let trash = [];
+let data = JSON.parse(localStorage.getItem("records")||"[]");
+let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 let idleTimer;
-let saveLock = false;
-let zipLock = false;
-let pdfLock = false;
+let pdfLock=false;
+let zipLock=false;
 
 function resetIdle(){
 clearTimeout(idleTimer);
@@ -117,7 +127,7 @@ function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
 document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
-if(id=="home") fetchData();
+if(id=="home") render();
 }
 
 function formatDate(trDate){
@@ -125,57 +135,54 @@ let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
 
-async function fetchData(){
-try{
-const res = await fetch(SHEET_URL);
-data = await res.json();
-render();
-}catch(e){console.error(e);}
-}
+// --- KAYDET ---
+document.getElementById('saveBtn').addEventListener('click', save);
+function save(){
+if(Date.now()-lastSave<2000)return;
+lastSave=Date.now();
 
-document.getElementById('saveBtn').addEventListener('click', async function(){
-if(saveLock) return;
-saveLock = true;
-setTimeout(()=>saveLock=false, 2000);
+if(!date.value){alert("Tarih seçiniz");return;}
+if(!desc.value){alert("Açıklama giriniz");return;}
+let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
 
-let dateVal = date.value;
-let descVal = desc.value;
+if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
 
-if(!dateVal){alert("Tarih seçiniz");saveLock=false;return;}
-if(!descVal){alert("Açıklama giriniz");saveLock=false;return;}
-
-let r={tarih: dateVal, aciklama: descVal, imgs: []};
-let files = [img1,img2];
-let loaded=0;
-let filesToRead = files.filter(f=>f.files[0]).length;
-
-function pushData(){
-fetch(SHEET_URL,{
-method:'POST',
-headers: {'Content-Type':'application/json'},
-body: JSON.stringify(r)
-}).then(res=>res.text()).then(txt=>{
-if(txt==="DUPLICATE"){alert("Bu kayıt zaten var");}
-else if(txt==="OK"){alert("Kayıt başarıyla eklendi");}
-img1.value="";img2.value="";desc.value="";date.value="";
-fetchData();
-}).finally(()=>{saveLock=false;});
-}
-
+let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
 if(filesToRead>0){
 files.forEach(f=>{
 if(f.files[0]){
-let reader = new FileReader();
-reader.onload = e=>{
+let reader=new FileReader();
+reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
-if(loaded===filesToRead) pushData();
+if(loaded===filesToRead){
+data.push(r);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+img1.value="";img2.value="";desc.value="";date.value="";
+updateBackupInfo();
+render();
+}
 };
 reader.readAsDataURL(f.files[0]);
 }
 });
-}else pushData();
-});
+}else{
+data.push(r);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+desc.value="";date.value="";
+updateBackupInfo();
+render();
+}
+
+document.getElementById('mainVideo').style.display='none';
+}
+
+function updateBackupInfo(){
+let now=new Date();
+document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
+}
 
 function render(){
 let container=document.getElementById("cardsContainer");
@@ -185,7 +192,7 @@ let c=document.createElement("div");
 c.className="card";
 c.innerHTML=`<img src="${r.imgs[0]||''}">
 <div>
-<b>${formatDate(r.tarih)}</b><br>${r.aciklama}
+<b>${formatDate(r.date)}</b><br>${r.desc}
 <div class="iconbar">
 <span onclick="edit(${i})">✏️</span>
 <span onclick="delRec(${i})">🗑️</span>
@@ -206,6 +213,8 @@ function delRec(i){
 if(!confirm("Silmek istediğine emin misin?"))return;
 trash.push({...data[i],deleted:Date.now()});
 data.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
 render();
 }
 
@@ -214,7 +223,7 @@ let html="";
 trash.forEach((t,i)=>{
 html+=`
 <div class="trashItem">
-<div>${formatDate(t.tarih)}<br>${t.aciklama}</div>
+<div>${formatDate(t.date)}<br>${t.desc}</div>
 <div class="trashIcons">
 <span onclick="restore(${i})">♻️</span>
 <span onclick="perma(${i})">🗑️</span>
@@ -227,12 +236,15 @@ document.getElementById("trash").innerHTML=html;
 function restore(i){
 data.push(trash[i]);
 trash.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
 showTrash();
 }
 
 function perma(i){
 if(!confirm("Kalıcı olarak silinsin mi?"))return;
 trash.splice(i,1);
+localStorage.setItem("trash",JSON.stringify(trash));
 showTrash();
 }
 
@@ -250,7 +262,7 @@ detail.appendChild(im);
 let txt=document.createElement("div");
 txt.className="text";
 txt.style.marginTop="5px";
-txt.innerHTML=`${formatDate(r.tarih)}<br>${r.aciklama}`;
+txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
 detail.appendChild(txt);
 let btn=document.createElement("button");
 btn.innerText="Geri";
@@ -262,60 +274,67 @@ detail.appendChild(btn);
 show("detail");
 }
 
-// ZIP Export/Import
-document.getElementById('exportZipBtn').onclick = async function(){
-if(zipLock){alert("ZIP işlemi zaten çalışıyor"); return;}
+document.getElementById('pdfExport').addEventListener('click', async ()=>{
+if(pdfLock){alert("PDF işlemi devam ediyor!");return;}
+pdfLock=true;
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF('p','mm','a4');
+let colX=[10,70,130];
+let y=10;
+let rowHeight=55;
+
+data.forEach((r,i)=>{
+let col = colX[i%3];
+if(i>0 && i%3===0) y+=rowHeight;
+if(r.imgs[0]) doc.addImage(r.imgs[0],'JPEG',col,y,55,35);
+doc.text(formatDate(r.date)+" "+r.desc,col,y+40);
+});
+doc.save("faaliyet.pdf");
+setTimeout(()=>{pdfLock=false;},1000);
+});
+
+document.getElementById('zipExport').addEventListener('click', async ()=>{
+if(zipLock){alert("ZIP işlemi devam ediyor!");return;}
 zipLock=true;
-setTimeout(()=>zipLock=false,60000);
 let s=s1.value,e=s2.value;
 let zip=new JSZip();
-data.filter(r=>r.tarih>=s && r.tarih<=e).forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
+data.filter(r=>r.date>=s&&r.date<=e)
+.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
 let blob=await zip.generateAsync({type:"blob"});
 let a=document.createElement("a");
 a.href=URL.createObjectURL(blob);
-a.download=`${s}_${e}.zip`;
-a.click();
-alert("ZIP başarıyla oluşturuldu");
-};
+a.download=`${s}_${e}.zip`;a.click();
+setTimeout(()=>{zipLock=false;},1000);
+});
 
-document.getElementById('importZipBtn').onclick = async function(){
-if(zipLock){alert("ZIP yükleme zaten çalışıyor"); return;}
+document.getElementById('zipImport').addEventListener('click', async ()=>{
+if(zipLock){alert("ZIP yüklemesi devam ediyor!");return;}
 zipLock=true;
-setTimeout(()=>zipLock=false,60000);
 let file=zipInput.files[0];
 let zip=await JSZip.loadAsync(file);
 for(let f in zip.files){
 let txt=await zip.files[f].async("string");
 data.push(JSON.parse(txt));
 }
-alert("ZIP başarıyla yüklendi");
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+alert("Yüklendi");
 render();
-};
-
-// PDF Oluştur
-document.getElementById('exportPDFBtn').onclick = function(){
-if(pdfLock){alert("PDF işlemi zaten çalışıyor"); return;}
-pdfLock=true;
-setTimeout(()=>pdfLock=false,60000);
-const { jsPDF } = window.jspdf;
-let doc = new jsPDF();
-let x=10,y=10,rowHeight=50;
-data.forEach((r,i)=>{
-let col = i%3===0?10:i%3===1?70:130;
-if(i%3===0 && i!==0) y += rowHeight;
-if(r.imgs[0]) doc.addImage(r.imgs[0],'JPEG',col,y,50,30);
-doc.text(formatDate(r.tarih)+" "+r.aciklama,col,y+35);
-if(i%3===2) y += 5;
+updateBackupInfo();
+setTimeout(()=>{zipLock=false;},1000);
 });
-doc.save("faaliyet.pdf");
-alert("PDF başarıyla oluşturuldu");
-};
 
 function edit(i){
-alert("Düzenleme fonksiyonu eklenecek 🥰");
+let r=data[i];
+let newDesc = prompt("Yeni açıklama:", r.desc);
+if(newDesc!==null){
+data[i].desc = newDesc;
+localStorage.setItem("records",JSON.stringify(data));
+render();
+}
 }
 
-fetchData();
+render();
 </script>
 </body>
 </html>
