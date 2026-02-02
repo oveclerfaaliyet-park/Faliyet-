@@ -112,8 +112,8 @@ document.getElementById('img1').value="";
 document.getElementById('img2').value="";
 
 // --- E-Tabloya Gönder ---
-fetch("https://script.google.com/macros/s/AKfycbyEevYqGCiK2iUv7olCmrOK8cajIyPVnNxjeM_HwXT-bMkaijxXxC5LWcslsV3Goiji6A/exec", {
-method:"POST",
+fetch("https://script.google.com/macros/s/AKfycbwiNde5DiLuKsmZa84dDy_fLtEQQ22hN4qJb4QFuQHGXnOlAXykge1QA6QOypIw3HqV/exec", {
+method: "POST",
 body: JSON.stringify(r)
 }).then(res=>res.json()).then(console.log).catch(console.error);
 });
@@ -131,7 +131,6 @@ doc.text(r.tarih+" "+r.aciklama,col,y+40);
 });
 doc.save("faaliyet.pdf");
 });
-
 </script>
 </body>
 </html>
