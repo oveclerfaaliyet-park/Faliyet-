@@ -46,7 +46,6 @@ textarea{height:200px}
 
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 
-/* Arka plan görselleri */
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
 body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
@@ -54,7 +53,7 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </head>
 <body class="home-bg">
 
-<video class="bg" autoplay muted loop id="mainVideo">
+<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
@@ -110,6 +109,7 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
+// --- KAYIT ve VERİLER ---
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
@@ -118,7 +118,7 @@ let idleTimer;
 function resetIdle(){
 clearTimeout(idleTimer);
 screensaver.style.display="none";
-idleTimer=setTimeout(()=>screensaver.style.display="block",15000);
+idleTimer=setTimeout(()=>screensaver.style.display="block",15000); // 15 saniye sonra video devreye giriyor
 }
 document.onclick=resetIdle;resetIdle();
 
@@ -134,8 +134,8 @@ let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
 }
 
+// --- KAYDET ---
 document.getElementById('saveBtn').addEventListener('click', save);
-
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
@@ -174,13 +174,18 @@ desc.value="";date.value="";
 updateBackupInfo();
 render();
 }
+
+// --- Açılış videosu görünmez başta ---
+document.getElementById('mainVideo').style.display='none';
 }
 
+// --- BACKUP BİLGİ ---
 function updateBackupInfo(){
 let now=new Date();
 document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
 }
 
+// --- RENDER ---
 function render(){
 let container=document.getElementById("cardsContainer");
 container.innerHTML="";
@@ -320,6 +325,7 @@ alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
 }
 
 render();
+
 </script>
 </body>
 </html>
