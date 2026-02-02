@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="manifest" href="manifest.json">
 <script>
 if("serviceWorker" in navigator){
@@ -17,31 +18,39 @@ body{margin:0;overflow:hidden;background:#000;color:#fff}
 video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
+
 header{padding:10px;text-align:center;font-size:22px;font-weight:bold}
 nav{display:flex;justify-content:space-around;background:#111;padding:10px}
 nav button{padding:10px 15px;font-size:16px}
+
 section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto}
 section.active{display:block}
+
 label{font-size:14px;opacity:.8}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
+
 .card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
 .card div{padding:10px;flex:1;position:relative}
+
 .iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
 .iconbar span{cursor:pointer}
+
 .trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
 .trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
+
 #detail{padding:10px;background:#fff;color:#000;}
 #detail img{width:30%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
+
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
+
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
 body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
 </style>
 </head>
-
 <body class="home-bg">
 
 <video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
@@ -100,19 +109,15 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// --- VERİLER ---
-let data=[], trash=[];
-let lastSave=0, idleTimer, pdfLock=false, zipLock=false;
+let data = JSON.parse(localStorage.getItem("records")||"[]");
+let trash = JSON.parse(localStorage.getItem("trash")||"[]");
+let lastSave=0;
+let idleTimer;
+let pdfLock=false;
+let zipLock=false;
 
-// --- GITHUB VERİSİ ---
-async function loadGitHubData(){
-try{
-let resp = await fetch('https://oveclerfaaliyet-park.github.io/Faliyet-/data.json');
-data = await resp.json();
-render();
-}catch(e){console.warn("GitHub verisi çekilemedi:", e);}
-}
-loadGitHubData();
+// --- E-Tablo URL ---
+const GAS_URL = "https://script.google.com/macros/s/AKfycbx2WO1Cb2r75P4ZZxEDBTNX5MW089RDLwc11QHbVjCXvwXWZIQAVSdqamqGM0vsRRRZjA/exec";
 
 function resetIdle(){
 clearTimeout(idleTimer);
@@ -154,27 +159,36 @@ reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
 if(loaded===filesToRead){
-data.push(r);
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-img1.value="";img2.value="";desc.value="";date.value="";
-updateBackupInfo();
-render();
+pushRecord(r);
 }
 };
 reader.readAsDataURL(f.files[0]);
 }
 });
 }else{
-data.push(r);
-data.sort((a,b)=>new Date(b.date)-new Date(a.date));
-localStorage.setItem("records",JSON.stringify(data));
-desc.value="";date.value="";
-updateBackupInfo();
-render();
+pushRecord(r);
 }
 
 document.getElementById('mainVideo').style.display='none';
+}
+
+function pushRecord(record){
+data.push(record);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+img1.value="";img2.value="";desc.value="";date.value="";
+updateBackupInfo();
+render();
+// --- E-Tablo gönder ---
+fetch(GAS_URL,{
+method:"POST",
+body:JSON.stringify({
+tarih: record.date,
+aciklama: record.desc,
+resim1: record.imgs[0]||"",
+resim2: record.imgs[1]||""
+})
+}).then(r=>r.json()).then(r=>console.log("GAS yanıtı:", r)).catch(e=>console.error(e));
 }
 
 function updateBackupInfo(){
@@ -272,7 +286,6 @@ detail.appendChild(btn);
 show("detail");
 }
 
-// --- PDF 3 sütunlu ---
 document.getElementById('pdfExport').addEventListener('click', async ()=>{
 if(pdfLock){alert("PDF işlemi devam ediyor!");return;}
 pdfLock=true;
@@ -280,7 +293,7 @@ const { jsPDF } = window.jspdf;
 let doc = new jsPDF('p','mm','a4');
 let colX=[10,70,130];
 let y=10;
-let rowHeight=60;
+let rowHeight=55;
 
 data.forEach((r,i)=>{
 let col = colX[i%3];
@@ -292,7 +305,6 @@ doc.save("faaliyet.pdf");
 setTimeout(()=>{pdfLock=false;},1000);
 });
 
-// --- ZIP ---
 document.getElementById('zipExport').addEventListener('click', async ()=>{
 if(zipLock){alert("ZIP işlemi devam ediyor!");return;}
 zipLock=true;
@@ -330,6 +342,16 @@ let newDesc = prompt("Yeni açıklama:", r.desc);
 if(newDesc!==null){
 data[i].desc = newDesc;
 localStorage.setItem("records",JSON.stringify(data));
+// --- GAS güncelle ---
+fetch(GAS_URL,{
+method:"POST",
+body:JSON.stringify({
+tarih: r.date,
+aciklama: newDesc,
+resim1: r.imgs[0]||"",
+resim2: r.imgs[1]||""
+})
+}).then(res=>res.json()).then(res=>console.log("GAS update:",res)).catch(e=>console.error(e));
 render();
 }
 }
