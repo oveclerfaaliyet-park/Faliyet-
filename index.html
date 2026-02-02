@@ -14,37 +14,38 @@ if("serviceWorker" in navigator){
 
 <style>
 *{box-sizing:border-box;font-family:Arial}
-body{margin:0;overflow:hidden;background:#000;color:#fff}
-video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
-#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:100;display:none}
-#screensaver video{width:100%;height:100%;object-fit:cover}
+body{margin:0;overflow:hidden;background:#000;color:#fff;position:relative}
+video.bg, #screensaver video{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4}
 
-header{padding:10px;text-align:center;font-size:22px;font-weight:bold;position:relative;z-index:1}
-nav{display:flex;justify-content:space-around;background:#111;padding:10px;position:relative;z-index:1}
+#screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:1000;display:none}
+#screensaver video{width:100%;height:100%;object-fit:cover;opacity:1}
+
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold;position:relative;z-index:2}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px;position:relative;z-index:2}
 nav button{padding:10px 15px;font-size:16px}
 
-section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;position:relative;z-index:1}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;position:relative;z-index:2}
 section.active{display:block}
 
 label{font-size:14px;opacity:.8}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
 
-.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;z-index:1;}
-.card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
-.card div{padding:10px;flex:1;position:relative;z-index:1}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;z-index:2}
+.card img{width:120px;height:120px;object-fit:cover;margin-right:4px}
+.card div{padding:10px;flex:1;position:relative}
 
-.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;z-index:1;}
+.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;z-index:2}
 .iconbar span{cursor:pointer}
 
-.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;position:relative;z-index:1;}
+.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;z-index:2}
 .trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
 
-#detail{padding:10px;background:#fff;color:#000;position:relative;z-index:1;}
+#detail{padding:10px;background:#fff;color:#000;position:relative;z-index:2}
 #detail img{width:48%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
-#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;position:relative;z-index:1}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;position:relative;z-index:2}
 
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
@@ -53,11 +54,11 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </head>
 <body class="home-bg">
 
-<video class="bg" autoplay muted loop id="mainVideo" style="display:none; z-index:101;">
+<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
-<div id="screensaver" style="display:none;">
+<div id="screensaver">
 <video autoplay muted loop>
 <source src="acilis.mp4" type="video/mp4">
 </video>
@@ -109,39 +110,43 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
-// --- KAYIT ve VERİLER ---
+// --- VERİLER ---
 let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
+let idleTimer;
+let videoActive=false;
 
 // --- EKRAN KORUYUCU ---
-let idleTimer;
-let mainVideo=document.getElementById('mainVideo');
-function startIdleTimer(){
-  clearTimeout(idleTimer);
-  hideVideo();
-  idleTimer=setTimeout(()=>showVideo(),15000);
+function activateScreensaver(){
+  document.getElementById('screensaver').style.display='block';
+  document.getElementById('mainVideo').style.display='block';
+  // içerik kapalı
+  document.querySelectorAll('header, nav, section').forEach(e=>e.style.pointerEvents='none');
+  document.querySelectorAll('header, nav, section').forEach(e=>e.style.opacity=0);
+  videoActive=true;
 }
-function showVideo(){
-  // tüm arka planları gizle
-  document.querySelectorAll("section").forEach(s=>s.style.display='none');
-  document.querySelector("header").style.display='none';
-  document.querySelector("nav").style.display='none';
-  mainVideo.style.display='block';
+function deactivateScreensaver(){
+  document.getElementById('screensaver').style.display='none';
+  document.getElementById('mainVideo').style.display='none';
+  // içerik açık
+  document.querySelectorAll('header, nav, section').forEach(e=>e.style.pointerEvents='auto');
+  document.querySelectorAll('header, nav, section').forEach(e=>e.style.opacity=1);
+  videoActive=false;
 }
-function hideVideo(){
-  mainVideo.style.display='none';
-  // arka planları tekrar göster
-  document.querySelectorAll("section").forEach(s=>{
-    if(s.id=='home') s.style.display='block';
-  });
-  document.querySelector("header").style.display='block';
-  document.querySelector("nav").style.display='flex';
-}
-document.onclick=startIdleTimer;
-document.onmousemove=startIdleTimer;
-startIdleTimer(); // başlat
 
+// --- BOŞTA KALMA ---
+function resetIdle(){
+  clearTimeout(idleTimer);
+  if(videoActive) deactivateScreensaver();
+  idleTimer=setTimeout(()=>activateScreensaver(),15000); // 15 saniye boşta kalınca
+}
+document.onclick=resetIdle;
+document.onkeydown=resetIdle;
+document.ontouchstart=resetIdle;
+resetIdle();
+
+// --- SHOW ---
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -149,6 +154,7 @@ document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
 if(id=="home") render();
 }
 
+// --- TARİH FORMAT ---
 function formatDate(trDate){
 let d=new Date(trDate);
 return d.getDate().toString().padStart(2,'0') + '.' + (d.getMonth()+1).toString().padStart(2,'0') + '.' + d.getFullYear();
@@ -159,13 +165,10 @@ document.getElementById('saveBtn').addEventListener('click', save);
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
-
 if(!date.value){alert("Tarih seçiniz");return;}
 if(!desc.value){alert("Açıklama giriniz");return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
-
 if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
-
 let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
 if(filesToRead>0){
 files.forEach(f=>{
@@ -196,10 +199,10 @@ render();
 }
 
 // --- Açılış videosu görünmez başta ---
-mainVideo.style.display='none';
-}
+document.getElementById('mainVideo').style.display='none';
+document.getElementById('screensaver').style.display='none';
 
-// --- BACKUP BİLGİ ---
+// --- BACKUP ---
 function updateBackupInfo(){
 let now=new Date();
 document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
@@ -225,12 +228,14 @@ container.appendChild(c);
 });
 }
 
+// --- FİLTRE ---
 function filter(text){
 document.querySelectorAll(".card").forEach(c=>{
 c.style.display=c.innerText.toLowerCase().includes(text.toLowerCase())?"flex":"none";
 });
 }
 
+// --- SİLME ---
 function delRec(i){
 if(!confirm("Silmek istediğine emin misin?"))return;
 trash.push({...data[i],deleted:Date.now()});
@@ -296,7 +301,7 @@ detail.appendChild(btn);
 show("detail");
 }
 
-// ZIP Export/Import
+// --- ZIP ---
 async function exportZip(){
 let s=s1.value,e=s2.value;
 let zip=new JSZip();
@@ -322,7 +327,7 @@ render();
 updateBackupInfo();
 }
 
-// PDF Oluştur
+// --- PDF ---
 function exportPDF(){
 const { jsPDF } = window.jspdf;
 let doc = new jsPDF();
