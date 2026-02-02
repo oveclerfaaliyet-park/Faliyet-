@@ -4,121 +4,122 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!-- CACHE KAPAT -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate"/>
+<meta http-equiv="Pragma" content="no-cache"/>
+<meta http-equiv="Expires" content="0"/>
+
 <link rel="manifest" href="manifest.json">
+
 <style>
 *{box-sizing:border-box;font-family:sans-serif}
-body,html{margin:0;padding:0;height:100%}
-.page{display:none;height:100%;background-size:cover;background-position:center}
-#home{background-image:url("pexels-eberhardgross-1612351.jpg")}
-#add{background-image:url("pexels-skylar-kang-6044198.jpg")}
-#settings{background-image:url("pexels-eberhardgross-1301976.jpg")}
-.header{background:#fff;padding:10px;position:sticky;top:0}
-.card{background:#fff;margin:10px;padding:10px;border-radius:8px}
-.card img{width:48%;height:200px;object-fit:cover;border-radius:6px}
-#fab{position:fixed;bottom:20px;right:20px;
+body{margin:0;background:#fff;color:#000}
+header{padding:10px;text-align:center;font-size:20px;font-weight:bold}
+#cards{padding:10px}
+.card{background:#f5f5f5;margin-bottom:10px;border-radius:10px;padding:10px}
+.card img{width:48%;height:200px;object-fit:cover;border-radius:8px}
+#addBtn{
+position:fixed;bottom:20px;right:20px;
 width:60px;height:60px;border-radius:50%;
-background:#2196f3;color:#fff;font-size:40px;
-display:flex;align-items:center;justify-content:center}
-#loader{position:fixed;top:0;left:0;width:100%;height:100%;
-background:#000;color:#fff;display:flex;
-align-items:center;justify-content:center;font-size:20px}
-video{width:100%;height:100%;object-fit:cover}
+background:#000;color:#fff;font-size:40px;border:none;
+}
+#addPanel{
+position:fixed;top:0;left:0;width:100%;height:100%;
+background:url("pexels-skylar-kang-6044198.jpg") center/cover;
+display:none;padding:20px
+}
+input,textarea,button{width:100%;margin:5px 0;padding:8px}
+video{
+position:fixed;top:0;left:0;width:100%;height:100%;
+object-fit:cover;z-index:9999;display:none
+}
 </style>
 </head>
 <body>
 
-<div id="loader">
-<video id="intro" src="acilis.mp4" autoplay muted></video>
-</div>
+<video id="idleVideo" src="acilis.mp4" muted autoplay loop></video>
 
-<div id="home" class="page">
-<div class="header">Park Faaliyet</div>
-<div id="list"></div>
-</div>
+<header>Park Faaliyet</header>
+<div id="cards"></div>
 
-<div id="add" class="page">
-<div class="header">Yeni Kayıt</div>
-<div class="card">
-<input type="date" id="date"><br>
-<textarea id="desc" placeholder="Açıklama"></textarea><br>
-<input type="file" id="img1" accept="image/*"><br>
-<input type="file" id="img2" accept="image/*"><br>
+<button id="addBtn">+</button>
+
+<div id="addPanel">
+<h3>Yeni Kayıt</h3>
+<input type="date" id="date">
+<textarea id="desc" placeholder="Açıklama"></textarea>
+<input type="file" id="img1">
+<input type="file" id="img2">
 <button onclick="save()">Kaydet</button>
-<div id="status"></div>
+<button onclick="closeAdd()">Kapat</button>
 </div>
-</div>
-
-<div id="settings" class="page">
-<div class="header">Ayarlar</div>
-<div class="card">
-PDF ve filtre ileride buraya.
-</div>
-</div>
-
-<div id="fab" onclick="show('add')">+</div>
 
 <script>
-const API = "https://script.google.com/macros/s/AKfycbxAIVyi1HVm-230dheIyVWoYcZr7-8FE9YZNsOWXp1DijEYx39rZ1CW0XZIR7aBURvrJw/exec";
-let sending=false;
-
-setTimeout(()=>{document.getElementById("loader").style.display="none";show("home")},15000);
-document.body.onclick=()=>document.getElementById("loader").style.display="none";
-
-function show(p){
-document.querySelectorAll(".page").forEach(x=>x.style.display="none");
-document.getElementById(p).style.display="block";
-if(p=="home") load();
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register("sw.js");
 }
 
-async function load(){
-const res = await fetch(API);
-const data = await res.json();
-const list = document.getElementById("list");
-list.innerHTML="";
+const URL="https://script.google.com/macros/s/AKfycbxAIVyi1HVm-230dheIyVWoYcZr7-8FE9YZNsOWXp1DijEYx39rZ1CW0XZIR7aBURvrJw/exec";
+
+let idleTimer;
+const video=document.getElementById("idleVideo");
+
+function resetIdle(){
+video.style.display="none";
+clearTimeout(idleTimer);
+idleTimer=setTimeout(()=>video.style.display="block",15000);
+}
+document.onclick=resetIdle;
+document.onmousemove=resetIdle;
+resetIdle();
+
+async function loadData(){
+const res=await fetch(URL);
+const data=await res.json();
+const c=document.getElementById("cards");
+c.innerHTML="";
 data.forEach(r=>{
-list.innerHTML+=`
+c.innerHTML+=`
 <div class="card">
-<div style="display:flex;gap:5px">
-<img src="${r.resim1}">
-<img src="${r.resim2}">
+<div><b>${r.tarih}</b></div>
+<div>${r.aciklama}</div>
+<div>
+${r.resim1?`<img src="${r.resim1}">`:""}
+${r.resim2?`<img src="${r.resim2}">`:""}
 </div>
-<b>${r.tarih}</b><br>${r.aciklama}
 </div>`;
 });
 }
 
-function compress(file){
+function readFile(f){
 return new Promise(r=>{
-const img=new Image();
-img.onload=()=>{
-const c=document.createElement("canvas");
-c.width=800;c.height=600;
-c.getContext("2d").drawImage(img,0,0,800,600);
-r(c.toDataURL("image/jpeg",0.5));
-};
-img.src=URL.createObjectURL(file);
+const fr=new FileReader();
+fr.onload=e=>r(e.target.result);
+fr.readAsDataURL(f);
 });
 }
 
 async function save(){
-if(sending) return;
-sending=true;
-document.getElementById("status").innerText="Kayıt yapılıyor...";
-
+document.querySelector("button").innerText="Kaydediliyor...";
 const data={
 tarih:date.value,
 aciklama:desc.value,
-resim1: await compress(img1.files[0]),
-resim2: await compress(img2.files[0])
+resim1:await readFile(img1.files[0]),
+resim2:await readFile(img2.files[0])
 };
-
-fetch(API,{method:"POST",body:JSON.stringify(data)})
-.then(r=>r.json()).then(()=>{
-document.getElementById("status").innerText="Kaydedildi";
-sending=false;
-show("home");
-});
+await fetch(URL,{method:"POST",body:JSON.stringify(data)});
+alert("Kaydedildi");
+closeAdd();
+loadData();
 }
+
+function closeAdd(){
+addPanel.style.display="none";
+}
+addBtn.onclick=()=>addPanel.style.display="block";
+
+loadData();
 </script>
 </body>
 </html>
