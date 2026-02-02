@@ -1,47 +1,51 @@
-const SPREADSHEET_ID = "1QaJ0d9STuSCcGawMwCsyE0HRszJxTe5ddKZls-7oz5k"; // E-Tablo ID
-const SHEET_NAME = "Sayfa1"; // Sayfa adı
+// DEPLOY_URL → Apps Script’in en son deploy URL’si
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxKIVZEkKWNguUY8CWmdc_poxJA5HA_RzboKZq8JmhFW7Hqfk6cQxzN8m2eD6lgsyZ-MA/exec";
 
-// GET isteği → HTML sayfasını açar
-function doGet(e){
-  return HtmlService.createHtmlOutputFromFile('index')
-      .setTitle("Park Faaliyet")
-      .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+// Dosya → Base64
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    if (!file) { resolve(""); return; }
+    const reader = new FileReader();
+    reader.onload = e => resolve(e.target.result);
+    reader.onerror = err => reject(err);
+    reader.readAsDataURL(file);
+  });
 }
 
-// POST isteği → HTML’den gelen veriyi E-Tablo’ya kaydeder
-function doPost(e){
-  try {
-    if(!e.postData.contents) throw "Boş veri geldi";
-    const data = JSON.parse(e.postData.contents);
+// Kaydet fonksiyonu
+async function saveRecord() {
+  let tarih = document.getElementById('date').value;
+  let desc = document.getElementById('desc').value;
+  let resim1 = await readFile(document.getElementById('img1').files[0]);
+  let resim2 = await readFile(document.getElementById('img2').files[0]);
 
-    const ss = SpreadsheetApp.openById(SPREADSHEET_ID);
-    const sheet = ss.getSheetByName(SHEET_NAME);
+  if (!tarih || !desc) { alert("Tarih ve açıklama gerekli"); return; }
 
-    sheet.appendRow([
-      data.tarih || "",
-      data.aciklama || "",
-      data.resim1 || "",
-      data.resim2 || ""
-    ]);
-
-    return ContentService.createTextOutput(
-      JSON.stringify({status:"success"})
-    ).setMimeType(ContentService.MimeType.JSON);
-
-  } catch(err){
-    return ContentService.createTextOutput(
-      JSON.stringify({status:"error", message: err.toString()})
-    ).setMimeType(ContentService.MimeType.JSON);
-  }
+  fetch(DEPLOY_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tarih, aciklama: desc, resim1, resim2 })
+  })
+    .then(res => res.json())
+    .then(res => {
+      if (res.status === "success") {
+        alert("Kaydedildi!");
+        document.getElementById('date').value = "";
+        document.getElementById('desc').value = "";
+        document.getElementById('img1').value = "";
+        document.getElementById('img2').value = "";
+      } else {
+        alert("Hata: " + res.message);
+      }
+    })
+    .catch(err => {
+      console.error(err);
+      alert("Hata oluştu. Konsolu kontrol et.");
+    });
 }
 
-// Test fonksiyonu → Apps Script içinde çalıştır
-function testPost() {
-  const e = { postData: { contents: JSON.stringify({
-    tarih:"2026-02-02",
-    aciklama:"Test",
-    resim1:"",
-    resim2:""
-  })}};
-  Logger.log(doPost(e).getContent());
-}
+// HTML’deki butona event ekle
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById('saveBtn');
+  if (btn) btn.addEventListener('click', saveRecord);
+});
