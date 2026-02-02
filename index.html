@@ -19,32 +19,32 @@ video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-i
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:100;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
-header{padding:10px;text-align:center;font-size:22px;font-weight:bold;z-index:2;position:relative}
-nav{display:flex;justify-content:space-around;background:#111;padding:10px;z-index:2;position:relative}
+header{padding:10px;text-align:center;font-size:22px;font-weight:bold;position:relative;z-index:1}
+nav{display:flex;justify-content:space-around;background:#111;padding:10px;position:relative;z-index:1}
 nav button{padding:10px 15px;font-size:16px}
 
-section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;z-index:2;position:relative}
+section{display:none;padding:10px;height:calc(100vh - 120px);overflow:auto;position:relative;z-index:1}
 section.active{display:block}
 
 label{font-size:14px;opacity:.8}
 input,textarea,button{width:100%;margin:6px 0;padding:10px;font-size:16px}
 textarea{height:200px}
 
-.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;}
+.card{display:flex;background:#222;margin:8px 0;border-radius:10px;overflow:hidden;cursor:pointer;position:relative;z-index:1;}
 .card img{width:120px;height:120px;object-fit:cover;margin-right:4px;}
-.card div{padding:10px;flex:1;position:relative}
+.card div{padding:10px;flex:1;position:relative;z-index:1}
 
-.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;}
+.iconbar{display:flex;gap:15px;margin-top:10px;font-size:20px;justify-content:flex-end;position:absolute;top:10px;right:10px;z-index:1;}
 .iconbar span{cursor:pointer}
 
-.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;}
+.trashItem{display:flex;justify-content:space-between;align-items:center;background:#222;margin:6px 0;padding:8px;border-radius:8px;position:relative;z-index:1;}
 .trashIcons span{font-size:20px;margin-left:10px;cursor:pointer}
 
-#detail{padding:10px;background:#fff;color:#000;z-index:2;position:relative}
+#detail{padding:10px;background:#fff;color:#000;position:relative;z-index:1;}
 #detail img{width:48%;margin-top:25px;margin-right:1%;}
 #detail .text{padding:5px;font-size:18px;margin-top:5px;}
 
-#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
+#searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc;position:relative;z-index:1}
 
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
@@ -53,11 +53,11 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </head>
 <body class="home-bg">
 
-<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
+<video class="bg" autoplay muted loop id="mainVideo" style="display:none; z-index:101;">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
-<div id="screensaver">
+<div id="screensaver" style="display:none;">
 <video autoplay muted loop>
 <source src="acilis.mp4" type="video/mp4">
 </video>
@@ -114,7 +114,34 @@ let data = JSON.parse(localStorage.getItem("records")||"[]");
 let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 
-// --- FONKSİYONLAR ---
+// --- EKRAN KORUYUCU ---
+let idleTimer;
+let mainVideo=document.getElementById('mainVideo');
+function startIdleTimer(){
+  clearTimeout(idleTimer);
+  hideVideo();
+  idleTimer=setTimeout(()=>showVideo(),15000);
+}
+function showVideo(){
+  // tüm arka planları gizle
+  document.querySelectorAll("section").forEach(s=>s.style.display='none');
+  document.querySelector("header").style.display='none';
+  document.querySelector("nav").style.display='none';
+  mainVideo.style.display='block';
+}
+function hideVideo(){
+  mainVideo.style.display='none';
+  // arka planları tekrar göster
+  document.querySelectorAll("section").forEach(s=>{
+    if(s.id=='home') s.style.display='block';
+  });
+  document.querySelector("header").style.display='block';
+  document.querySelector("nav").style.display='flex';
+}
+document.onclick=startIdleTimer;
+document.onmousemove=startIdleTimer;
+startIdleTimer(); // başlat
+
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
@@ -132,10 +159,13 @@ document.getElementById('saveBtn').addEventListener('click', save);
 function save(){
 if(Date.now()-lastSave<2000)return;
 lastSave=Date.now();
+
 if(!date.value){alert("Tarih seçiniz");return;}
 if(!desc.value){alert("Açıklama giriniz");return;}
 let r={date:date.value,desc:desc.value,imgs:[],time:Date.now()};
+
 if(data.find(x=>x.date==r.date && x.desc==r.desc)){alert("Bu kayıt zaten var");return;}
+
 let files=[img1,img2],loaded=0,filesToRead=files.filter(f=>f.files[0]).length;
 if(filesToRead>0){
 files.forEach(f=>{
@@ -145,7 +175,8 @@ reader.onload=e=>{
 r.imgs.push(e.target.result);
 loaded++;
 if(loaded===filesToRead){
-data.push(r);data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+data.push(r);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 img1.value="";img2.value="";desc.value="";date.value="";
 updateBackupInfo();
@@ -156,14 +187,19 @@ reader.readAsDataURL(f.files[0]);
 }
 });
 }else{
-data.push(r);data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+data.push(r);
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
 localStorage.setItem("records",JSON.stringify(data));
 desc.value="";date.value="";
 updateBackupInfo();
 render();
 }
 
-// --- BACKUP ---
+// --- Açılış videosu görünmez başta ---
+mainVideo.style.display='none';
+}
+
+// --- BACKUP BİLGİ ---
 function updateBackupInfo(){
 let now=new Date();
 document.getElementById("backupInfo").innerText="Son yedekleme: "+now.getDate()+"."+ (now.getMonth()+1) +"."+now.getFullYear()+" "+now.getHours()+":"+now.getMinutes();
@@ -219,59 +255,97 @@ html+=`
 document.getElementById("trash").innerHTML=html;
 }
 
-function restore(i){data.push(trash[i]);trash.splice(i,1);localStorage.setItem("records",JSON.stringify(data));localStorage.setItem("trash",JSON.stringify(trash));showTrash();}
-function perma(i){if(!confirm("Kalıcı olarak silinsin mi?"))return;trash.splice(i,1);localStorage.setItem("trash",JSON.stringify(trash));showTrash();}
+function restore(i){
+data.push(trash[i]);
+trash.splice(i,1);
+localStorage.setItem("records",JSON.stringify(data));
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
+}
+
+function perma(i){
+if(!confirm("Kalıcı olarak silinsin mi?"))return;
+trash.splice(i,1);
+localStorage.setItem("trash",JSON.stringify(trash));
+showTrash();
+}
+
 function openDetail(i){
 let r=data[i];
-detail.innerHTML="";detail.style.background="#fff";
+detail.innerHTML="";
+detail.style.background="#fff";
 document.querySelector(".bg").style.display="none";
 r.imgs.forEach(img=>{
-let im=document.createElement("img");im.src=img;im.style.marginRight="1%";detail.appendChild(im);
+let im=document.createElement("img");
+im.src=img;
+im.style.marginRight="1%";
+detail.appendChild(im);
 });
-let txt=document.createElement("div");txt.className="text";txt.style.marginTop="5px";txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;detail.appendChild(txt);
-let btn=document.createElement("button");btn.innerText="Geri";btn.onclick=()=>{show('home');document.querySelector(".bg").style.display="block";};detail.appendChild(btn);show("detail");
+let txt=document.createElement("div");
+txt.className="text";
+txt.style.marginTop="5px";
+txt.innerHTML=`${formatDate(r.date)}<br>${r.desc}`;
+detail.appendChild(txt);
+let btn=document.createElement("button");
+btn.innerText="Geri";
+btn.onclick=()=>{
+show('home');
+document.querySelector(".bg").style.display="block";
+};
+detail.appendChild(btn);
+show("detail");
 }
 
 // ZIP Export/Import
-async function exportZip(){let s=s1.value,e=s2.value;let zip=new JSZip();data.filter(r=>r.date>=s&&r.date<=e).forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));let blob=await zip.generateAsync({type:"blob"});let a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`${s}_${e}.zip`;a.click();}
-async function importZip(){let file=zipInput.files[0];let zip=await JSZip.loadAsync(file);for(let f in zip.files){let txt=await zip.files[f].async("string");data.push(JSON.parse(txt));}data.sort((a,b)=>new Date(b.date)-new Date(a.date));localStorage.setItem("records",JSON.stringify(data));alert("Yüklendi");render();updateBackupInfo();}
+async function exportZip(){
+let s=s1.value,e=s2.value;
+let zip=new JSZip();
+data.filter(r=>r.date>=s&&r.date<=e)
+.forEach((r,i)=>zip.file(`k${i}.json`,JSON.stringify(r)));
+let blob=await zip.generateAsync({type:"blob"});
+let a=document.createElement("a");
+a.href=URL.createObjectURL(blob);
+a.download=`${s}_${e}.zip`;a.click();
+}
+
+async function importZip(){
+let file=zipInput.files[0];
+let zip=await JSZip.loadAsync(file);
+for(let f in zip.files){
+let txt=await zip.files[f].async("string");
+data.push(JSON.parse(txt));
+}
+data.sort((a,b)=>new Date(b.date)-new Date(a.date));
+localStorage.setItem("records",JSON.stringify(data));
+alert("Yüklendi");
+render();
+updateBackupInfo();
+}
 
 // PDF Oluştur
-function exportPDF(){const { jsPDF } = window.jspdf;let doc = new jsPDF();let x=10, y=10;let rowHeight=50;data.forEach((r,i)=>{let col = i%2===0?10:105;if(i%2===0 && i!==0) y += rowHeight;if(r.imgs[0]){doc.addImage(r.imgs[0],'JPEG',col,y,90,40);}doc.text(formatDate(r.date)+" "+r.desc,col,y+45);if(i%2!==0) y += 5;});doc.save("faaliyet.pdf");}
+function exportPDF(){
+const { jsPDF } = window.jspdf;
+let doc = new jsPDF();
+let x=10, y=10;
+let rowHeight=50;
+data.forEach((r,i)=>{
+let col = i%2===0?10:105;
+if(i%2===0 && i!==0) y += rowHeight;
+if(r.imgs[0]){
+doc.addImage(r.imgs[0],'JPEG',col,y,90,40);
+}
+doc.text(formatDate(r.date)+" "+r.desc,col,y+45);
+if(i%2!==0) y += 5;
+});
+doc.save("faaliyet.pdf");
+}
 
-function edit(i){alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");}
+function edit(i){
+alert("Düzenleme fonksiyonu istersen sonra ekleriz 🥰");
+}
+
 render();
 
-// --- EKRAN KORUYUCU VİDEO ---
-const screensaverVideo = document.querySelector("#screensaver video");
-const screensaverDiv = document.getElementById('screensaver');
-
-function startScreensaver() {
-    document.querySelectorAll("body > *:not(#screensaver)").forEach(el=>{
-        if(el.tagName!=="SCRIPT") el.style.display="none";
-    });
-    screensaverDiv.style.display = 'block';
-    screensaverVideo.play();
-}
-
-function stopScreensaver() {
-    screensaverVideo.pause();
-    screensaverDiv.style.display = 'none';
-    document.querySelectorAll("body > *:not(#screensaver)").forEach(el=>{
-        if(el.tagName!=="SCRIPT") el.style.display="";
-    });
-}
-
-let idleTimer2;
-function resetIdle2() {
-    clearTimeout(idleTimer2);
-    stopScreensaver();
-    idleTimer2 = setTimeout(startScreensaver, 15000); // 15 saniye
-}
-document.addEventListener("click", resetIdle2);
-document.addEventListener("keydown", resetIdle2);
-document.addEventListener("touchstart", resetIdle2);
-resetIdle2();
 </script>
 </body>
 </html>
