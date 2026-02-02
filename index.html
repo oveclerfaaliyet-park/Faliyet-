@@ -15,7 +15,7 @@ if("serviceWorker" in navigator){
 <style>
 *{box-sizing:border-box;font-family:Arial}
 body{margin:0;overflow:hidden;background:#000;color:#fff}
-video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4;display:none;}
+video.bg{position:fixed;top:0;left:0;width:100%;height:100%;object-fit:cover;z-index:-2;opacity:.4;display:block;}
 #screensaver{position:fixed;top:0;left:0;width:100%;height:100%;background:black;z-index:10;display:none}
 #screensaver video{width:100%;height:100%;object-fit:cover}
 
@@ -46,6 +46,7 @@ textarea{height:200px}
 
 #searchBox{margin:3px 0;padding:8px;width:100%;font-size:16px;border-radius:6px;border:1px solid #ccc}
 
+/* Arka plan görselleri */
 body.add-bg{background:url('pexels-eberhardgross-1301976.jpg') no-repeat center center fixed;background-size:cover;}
 body.home-bg{background:url('pexels-eberhardgross-1612351.jpg') no-repeat center center fixed;background-size:cover;}
 body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat center center fixed;background-size:cover;}
@@ -53,7 +54,7 @@ body.settings-bg{background:url('pexels-skylar-kang-6044198.jpg') no-repeat cent
 </head>
 <body class="home-bg">
 
-<video class="bg" autoplay muted loop id="mainVideo">
+<video class="bg" autoplay muted loop id="mainVideo" style="display:none;">
 <source src="acilis.mp4" type="video/mp4">
 </video>
 
@@ -114,13 +115,20 @@ let trash = JSON.parse(localStorage.getItem("trash")||"[]");
 let lastSave=0;
 let idleTimer;
 
-let video = document.getElementById('mainVideo');
-video.style.display='none';
+const video = document.getElementById('mainVideo');
+let activeBgClass = document.body.className;
 
+// --- USER IDLE & VIDEO LOGIC ---
 function resetIdle(){
-clearTimeout(idleTimer);
-video.style.display='none';
-idleTimer=setTimeout(()=>{ video.style.display='block'; },15000); // 15 saniye sonra video devreye giriyor
+  clearTimeout(idleTimer);
+  // Kullanıcı video izliyorsa ve tıklama yaptığında kapat
+  video.style.display='none';
+  document.body.className=activeBgClass;
+  idleTimer = setTimeout(() => {
+    // 15 saniye boşta kaldığında video aç, arka plan görselini gizle
+    video.style.display='block';
+    document.body.className=''; // arka planı gizle
+  },15000);
 }
 document.onclick=resetIdle;
 document.onmousemove=resetIdle;
@@ -131,7 +139,8 @@ resetIdle();
 function show(id){
 document.querySelectorAll("section").forEach(s=>s.classList.remove("active"));
 document.getElementById(id).classList.add("active");
-document.body.className=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
+activeBgClass=id=='home'?'home-bg':id=='add'?'add-bg':'settings-bg';
+if(video.style.display==='none') document.body.className=activeBgClass;
 if(id=="home") render();
 }
 
@@ -179,8 +188,9 @@ updateBackupInfo();
 render();
 }
 
-// Videoyi gizle kullanıcı kullanınca
+// Kullanıcı kayıt yaptığında video kapalı olsun
 video.style.display='none';
+document.body.className=activeBgClass;
 }
 
 // --- BACKUP INFO ---
