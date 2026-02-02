@@ -1,103 +1,117 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8">
 <title>Park Faaliyet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
-body{font-family:Arial,sans-serif;background:#111;color:#fff;padding:12px}
-input,textarea,button{width:100%;padding:8px;margin:6px 0}
-.card{background:#222;padding:10px;border-radius:8px;margin:8px 0}
-.card img{max-width:120px;height:auto;margin-right:6px}
+*{box-sizing:border-box;font-family:sans-serif}
+body{margin:0;padding:10px;background:#f2f2f2;color:#000}
+h2{text-align:center}
+input,textarea,button{width:100%;padding:10px;margin:6px 0;font-size:16px}
+button{background:#2196f3;color:#fff;border:none;border-radius:6px}
+button:disabled{background:#999}
+.card{background:#fff;margin:10px 0;padding:10px;border-radius:10px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.card img{width:48%;height:200px;object-fit:cover;margin:1%}
+#loading{display:none;text-align:center;font-size:18px;margin:10px}
+#addBtn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;font-size:30px}
+#formBox{display:none;background:#fff;padding:10px;border-radius:10px}
 </style>
 </head>
 <body>
+
 <h2>Park Faaliyet</h2>
 
-<div>
-  <label>Tarih</label>
+<div id="loading">⏳ Kayıt yapılıyor...</div>
+
+<div id="formBox">
+  <h3>Yeni Kayıt</h3>
   <input type="date" id="date">
-  <label>Açıklama</label>
-  <textarea id="desc"></textarea>
-  <label>Resim 1</label>
+  <textarea id="desc" placeholder="Açıklama"></textarea>
   <input type="file" id="img1" accept="image/*">
-  <label>Resim 2</label>
   <input type="file" id="img2" accept="image/*">
   <button id="saveBtn">Kaydet</button>
 </div>
 
-<hr>
-<h3>Kayıtlar</h3>
-<div id="cardsContainer">Yükleniyor...</div>
+<div id="cardsContainer"></div>
+
+<button id="addBtn">+</button>
 
 <script>
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbwyqoBB8vI6tY1XCeaA2EKGdO48RulRnA6gIO3ArjfU4viSA8_Q5DR0U_iCXEl1dyo/exec";
+const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbxAIVyi1HVm-230dheIyVWoYcZr7-8FE9YZNsOWXp1DijEYx39rZ1CW0XZIR7aBURvrJw/exec";
 
-function readFileBase64(file){
-  return new Promise(resolve=>{
-    if(!file){resolve(""); return;}
-    const r = new FileReader();
-    r.onload = e=>resolve(e.target.result);
-    r.onerror=()=>resolve("");
-    r.readAsDataURL(file);
+let sending = false;
+
+async function fetchData(){
+  const res = await fetch(DEPLOY_URL);
+  const data = await res.json();
+  render(data);
+}
+
+function render(data){
+  const box = document.getElementById("cardsContainer");
+  box.innerHTML="";
+  data.reverse().forEach(r=>{
+    box.innerHTML += `
+      <div class="card">
+        <div>
+          ${r.resim1 ? `<img src="${r.resim1}">` : ""}
+          ${r.resim2 ? `<img src="${r.resim2}">` : ""}
+        </div>
+        <div><b>${r.tarih}</b></div>
+        <div>${r.aciklama}</div>
+      </div>
+    `;
   });
 }
 
-async function sendFormData(tarih, aciklama, r1, r2){
-  const form = new FormData();
-  form.append("tarih", tarih);
-  form.append("aciklama", aciklama);
-  form.append("resim1", r1||"");
-  form.append("resim2", r2||"");
-  const resp = await fetch(DEPLOY_URL, {method:"POST", body:form});
-  return resp.json();
+function readFile(file){
+  return new Promise(res=>{
+    if(!file){res(""); return;}
+    const fr=new FileReader();
+    fr.onload=e=>res(e.target.result);
+    fr.readAsDataURL(file);
+  });
 }
 
-document.getElementById("saveBtn").addEventListener("click", async ()=>{
-  const tarih=document.getElementById("date").value;
-  const desc=document.getElementById("desc").value;
-  if(!tarih||!desc){alert("Tarih ve açıklama gerekli");return;}
-  const r1=await readFileBase64(document.getElementById("img1").files[0]);
-  const r2=await readFileBase64(document.getElementById("img2").files[0]);
+document.getElementById("addBtn").onclick=()=>{
+  document.getElementById("formBox").style.display="block";
+};
 
-  try{
-    const res=await sendFormData(tarih, desc, r1, r2);
-    if(res.status==="success"){
-      alert("Kaydedildi!");
-      document.getElementById("date").value="";
-      document.getElementById("desc").value="";
-      document.getElementById("img1").value="";
-      document.getElementById("img2").value="";
-      loadData();
-    }else{
-      alert("Sunucu hatası: "+(res.message||"bilinmiyor"));
-      console.error(res);
-    }
-  }catch(err){
-    console.error(err);
-    alert("Gönderme hatası. Konsolu kontrol et.");
-  }
-});
+document.getElementById("saveBtn").onclick=async()=>{
+  if(sending) return;
+  sending=true;
 
-async function loadData(){
-  const container=document.getElementById("cardsContainer");
-  container.innerHTML="Yükleniyor...";
-  try{
-    const r=await fetch(DEPLOY_URL);
-    const data=await r.json();
-    container.innerHTML="";
-    if(!Array.isArray(data)||data.length===0){container.innerHTML="Kayıt yok";return;}
-    data.forEach(item=>{
-      const div=document.createElement("div");
-      div.className="card";
-      const imgs=(item.resim1?`<img src="${item.resim1}">`:"")+(item.resim2?`<img src="${item.resim2}">`:"");
-      div.innerHTML=`<div><strong>${item.tarih||""}</strong></div><div>${item.aciklama||""}</div><div>${imgs}</div>`;
-      container.appendChild(div);
-    });
-  }catch(err){console.error(err);container.innerHTML="Veri yüklenemedi";}
-}
+  const tarih=date.value;
+  const aciklama=desc.value;
+  if(!tarih||!aciklama){alert("Tarih ve açıklama zorunlu"); sending=false; return;}
 
-window.addEventListener("load", loadData);
+  loading.style.display="block";
+  saveBtn.disabled=true;
+
+  const r1=await readFile(img1.files[0]);
+  const r2=await readFile(img2.files[0]);
+
+  fetch(DEPLOY_URL,{
+    method:"POST",
+    headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({tarih,aciklama,resim1:r1,resim2:r2})
+  }).then(r=>r.json()).then(r=>{
+    alert("Kaydedildi");
+    formBox.style.display="none";
+    loading.style.display="none";
+    saveBtn.disabled=false;
+    sending=false;
+    date.value="";desc.value="";img1.value="";img2.value="";
+    fetchData();
+  }).catch(err=>{
+    alert("Hata");
+    console.log(err);
+    sending=false;
+  });
+};
+
+fetchData();
 </script>
 </body>
 </html>
