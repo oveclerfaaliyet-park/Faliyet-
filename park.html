@@ -17,9 +17,10 @@
 <input type="text" id="txtSearchPark" placeholder="Ara..." oninput="filterTasks('lstPark','txtSearchPark')">
 <div id="lstPark" class="card-container"></div>
 
-<!-- Sağ alt büyük mavi + -->
+<!-- Sağ alt mavi + buton -->
 <button id="btnAddPark" class="floating-add" onclick="openAddParkPopup()">+</button>
 
+<!-- Popup -->
 <div id="addParkPopup" class="popup hidden">
   <label>Tarih: <input type="date" id="dpParkDate"></label>
   <label>Açıklama: <textarea id="txtParkDesc"></textarea></label>
