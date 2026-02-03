@@ -2,125 +2,29 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Park Faaliyet</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="manifest" href="manifest.json">
-<style>
-*{box-sizing:border-box;font-family:sans-serif;margin:0;padding:0}
-body{background:#111;color:#fff;font-size:16px;font-family:sans-serif;}
-input,textarea,button{width:100%;padding:8px;margin:5px 0;border-radius:4px;border:1px solid #444;}
-button{cursor:pointer;background:#007bff;color:#fff;border:none;}
-.card{background:#222;margin:5px;padding:10px;border-radius:8px;}
-.card img{width:100px;height:100px;margin-right:5px;object-fit:cover;}
-#addBtn{position:fixed;bottom:20px;right:20px;width:60px;height:60px;border-radius:50%;background:#007bff;color:#fff;font-size:36px;text-align:center;line-height:60px;cursor:pointer;z-index:1000;}
-#addSection{display:none;background:rgba(0,0,0,0.8);padding:15px;position:fixed;bottom:100px;right:20px;width:300px;border-radius:10px;}
-</style>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ana Ekran</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
 </head>
 <body>
+  <header>
+    <h1>Hoşgeldin!</h1>
+    <div id="lblDateTime"></div>
+  </header>
 
-<h2>Park Faaliyet</h2>
+  <main>
+    <section id="todayTasks">
+      <h2>Bugün Yapılacaklar</h2>
+      <div id="lstTodayTasks" class="card-container"></div>
+    </section>
 
-<div id="listSection">
-  <h3>Kayıtlar</h3>
-  <div id="cardsContainer"></div>
-</div>
-
-<div id="addBtn">+</div>
-<div id="addSection">
-  <label>Tarih:</label>
-  <input type="date" id="date">
-  <label>Açıklama:</label>
-  <textarea id="desc"></textarea>
-  <label>Resim 1:</label>
-  <input type="file" id="img1" accept="image/*">
-  <label>Resim 2:</label>
-  <input type="file" id="img2" accept="image/*">
-  <button id="saveBtn">Kaydet</button>
-</div>
-
-<script>
-const DEPLOY_URL = "https://script.google.com/macros/s/AKfycbyKsEZ4ByvWQyd_TOO_oqYCwbp_leohm_sOyJxpvAwM7Wh7TrsgVk09zczhIZYVU51o/exec";
-
-// Listeyi çek
-async function fetchData(){
-  try{
-    const res = await fetch(DEPLOY_URL);
-    const data = await res.json();
-    render(data);
-  } catch(e){ console.error(e); }
-}
-
-// Kartları oluştur
-function render(data){
-  const container = document.getElementById("cardsContainer");
-  container.innerHTML = "";
-  data.forEach(r=>{
-    const card = document.createElement("div");
-    card.className = "card";
-    card.innerHTML = `
-      <div><strong>${r.tarih}</strong></div>
-      <div>${r.aciklama}</div>
-      <div>${r.resim1 ? '<img src="'+r.resim1+'">' : ''}${r.resim2 ? '<img src="'+r.resim2+'">' : ''}</div>
-    `;
-    container.appendChild(card);
-  });
-}
-
-// Dosyayı base64 oku (PWA için küçültme)
-function readFile(file){
-  return new Promise((resolve,reject)=>{
-    if(!file){resolve(""); return;}
-    const reader = new FileReader();
-    reader.onload = e=>{
-      // Base64’i küçültmek için quality düşürülebilir
-      resolve(e.target.result);
-    };
-    reader.onerror = err=>reject(err);
-    reader.readAsDataURL(file);
-  });
-}
-
-// Ekle paneli aç/kapa
-document.getElementById("addBtn").addEventListener("click",()=>{
-  const sec = document.getElementById("addSection");
-  sec.style.display = (sec.style.display==="none")?"block":"none";
-});
-
-// Kaydet
-document.getElementById("saveBtn").addEventListener("click", async ()=>{
-  const tarih = document.getElementById("date").value;
-  const desc = document.getElementById("desc").value;
-  const img1 = await readFile(document.getElementById("img1").files[0]);
-  const img2 = await readFile(document.getElementById("img2").files[0]);
-
-  if(!tarih || !desc){alert("Tarih ve açıklama gerekli"); return;}
-
-  fetch(DEPLOY_URL, {
-    method:"POST",
-    headers:{"Content-Type":"application/json"},
-    body: JSON.stringify({tarih, aciklama:desc, resim1:img1, resim2:img2})
-  })
-  .then(res=>res.json())
-  .then(res=>{
-    if(res.status==="success"){
-      alert("Kaydedildi!");
-      document.getElementById("date").value="";
-      document.getElementById("desc").value="";
-      document.getElementById("img1").value="";
-      document.getElementById("img2").value="";
-      document.getElementById("addSection").style.display="none";
-      fetchData();
-    } else alert("Hata: "+res.message);
-  }).catch(console.error);
-});
-
-// İlk veri çek
-fetchData();
-
-// PWA: service worker register
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>console.log("SW Registered"));
-}
-</script>
+    <section id="screens">
+      <button onclick="openScreen('park.html')">Park Faaliyet</button>
+      <button onclick="openScreen('personel.html')">Personel</button>
+      <button onclick="openScreen('evrak.html')">Evrak Takip</button>
+      <button onclick="openScreen('settings.html')">Ayarlar</button>
+    </section>
+  </main>
 </body>
 </html>
