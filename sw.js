@@ -1,43 +1,16 @@
-const CACHE_NAME = 'kodular-app-cache-v1';
-const urlsToCache = [
-  './index.html',
-  './park.html',
-  './personel.html',
-  './evrak.html',
-  './settings.html',
-  './style.css',
-  './app.js'
+const CACHE_NAME='kodular-app-cache-v1';
+const urlsToCache=[
+  './index.html','./park.html','./personel.html','./evrak.html','./settings.html',
+  './style.css','./app.js'
 ];
-
-// Install: cache dosyaları
-self.addEventListener('install', event => {
-  event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('Cache açıldı ve dosyalar eklendi');
-        return cache.addAll(urlsToCache);
-      })
-  );
+self.addEventListener('install',e=>{
+  e.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.addAll(urlsToCache)));
   self.skipWaiting();
 });
-
-// Activate: eski cache temizleme
-self.addEventListener('activate', event => {
-  event.waitUntil(
-    caches.keys().then(keys => 
-      Promise.all(keys.map(key => {
-        if (key !== CACHE_NAME) return caches.delete(key);
-      }))
-    )
-  );
+self.addEventListener('activate',e=>{
+  e.waitUntil(caches.keys().then(keys=>Promise.all(keys.map(k=>{if(k!==CACHE_NAME)return caches.delete(k);}))));
   self.clients.claim();
 });
-
-// Fetch: cache veya network
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
-  );
+self.addEventListener('fetch',e=>{
+  e.respondWith(caches.match(e.request).then(r=>r||fetch(e.request)));
 });
