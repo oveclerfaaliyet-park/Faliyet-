@@ -3,35 +3,40 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Park Faaliyet</title>
+<title>Ana Ekran</title>
 <link rel="stylesheet" href="style.css">
 <script src="app.js" defer></script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
 <header>
-  <h1>Park Faaliyet</h1>
-  <button onclick="goBack()">Ana Ekran</button>
+  <h1>Hoşgeldin!</h1>
+  <div id="lblDateTime"></div>
 </header>
 
 <main>
-  <!-- Arama Kutusu -->
-  <input type="text" id="txtSearchPark" placeholder="Ara..." oninput="filterTasks('lstPark','txtSearchPark')">
+  <section id="todayTasks">
+    <h2>Bugün Yapılacaklar</h2>
+    <input type="text" id="txtSearchToday" placeholder="Ara..." oninput="filterTasks('lstTodayTasks','txtSearchToday')">
+    <div id="lstTodayTasks" class="card-container"></div>
+  </section>
 
-  <!-- Liste -->
-  <div id="lstPark" class="card-container"></div>
-
-  <!-- Ekleme Butonu -->
-  <button id="btnAddPark" class="floating-add" onclick="openAddParkPopup()">+</button>
-
-  <!-- Popup -->
-  <div id="addParkPopup" class="popup hidden">
-    <label>Tarih: <input type="date" id="dpParkDate"></label>
-    <label>Açıklama: <textarea id="txtParkDesc"></textarea></label>
-    <label>Resim 1: <input type="file" id="imgPark1"></label>
-    <label>Resim 2: <input type="file" id="imgPark2"></label>
-    <button onclick="savePark()">Kaydet</button>
-    <button onclick="closeAddParkPopup()">Kapat</button>
-  </div>
+  <section id="screens">
+    <button onclick="openScreen('park.html')">Park Faaliyet</button>
+    <button onclick="openScreen('personel.html')">Personel</button>
+    <button onclick="openScreen('evrak.html')">Evrak Takip</button>
+    <button onclick="openScreen('settings.html')">Ayarlar</button>
+  </section>
 </main>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW kayıtlı', reg))
+      .catch(err => console.error('SW hatası', err));
+  });
+}
+</script>
 </body>
 </html>
