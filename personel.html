@@ -10,24 +10,24 @@
 <body>
 <header>
   <h1>Personel</h1>
-  <button onclick="goBack()">Ana Ekran</button>
+  <button onclick="goBack()">Geri</button>
 </header>
-
 <main>
-<input type="text" id="txtSearchPersonel" placeholder="Ara..." oninput="filterTasks('lstPersonel','txtSearchPersonel')">
-<div id="lstPersonel" class="card-container"></div>
+  <input type="text" id="txtSearchPersonel" placeholder="Ara..." oninput="filterTasks('lstPersonel','txtSearchPersonel')">
+  <div id="lstPersonel" class="card-container"></div>
 
-<button id="btnAddPersonel" class="floating-add" onclick="openAddPersonelPopup()">+</button>
+  <!-- Popup -->
+  <div id="addPersonelPopup" class="popup hidden">
+    <label>Adı Soyadı: <input type="text" id="txtPersonelName"></label>
+    <label>Başlangıç: <input type="date" id="dpStart"></label>
+    <label>Bitiş: <input type="date" id="dpEnd"></label>
+    <label>Açıklama: <textarea id="txtPersonelDesc"></textarea></label>
+    <label>Resim: <input type="file" id="imgPersonel"></label>
+    <button id="btnSavePersonel">Kaydet</button>
+    <button onclick="closeAddPersonelPopup()">Kapat</button>
+  </div>
 
-<div id="addPersonelPopup" class="popup hidden">
-  <label>Adı Soyadı: <input type="text" id="txtPersonelName"></label>
-  <label>Başlangıç: <input type="date" id="dpStart"></label>
-  <label>Bitiş: <input type="date" id="dpEnd"></label>
-  <label>Açıklama: <textarea id="txtPersonelDesc"></textarea></label>
-  <label>Resim: <input type="file" id="imgPersonel"></label>
-  <button onclick="savePersonel()">Kaydet</button>
-  <button onclick="closeAddPersonelPopup()">Kapat</button>
-</div>
+  <button id="btnAddPersonel" class="floating-add">+</button>
 </main>
 </body>
 </html>
