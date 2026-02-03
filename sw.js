@@ -1,19 +1,12 @@
-self.addEventListener("install", e=>{
-e.waitUntil(
-caches.open("park").then(c=>{
-return c.addAll([
-"index.html",
-"manifest.json",
-"acilis.mp4"
-]);
-})
-);
+const CACHE_NAME = 'park-cache-v1';
+const urlsToCache = ['index.html','manifest.json','ikon-192.png','ikon-512.png'];
+
+self.addEventListener('install', event => {
+  event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache)));
 });
 
-self.addEventListener("fetch", e=>{
-e.respondWith(
-caches.match(e.request).then(r=>{
-return r || fetch(e.request);
-})
-);
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request).then(response => response || fetch(event.request))
+  );
 });
