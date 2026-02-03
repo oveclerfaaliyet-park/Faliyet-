@@ -7,3 +7,24 @@ button { padding:10px 15px; margin:5px; cursor:pointer; }
 .card { border:1px solid #ccc; padding:10px; border-radius:5px; background:white; }
 .popup { position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border:1px solid #ccc; z-index:1000; }
 .hidden { display:none; }
+
+/* Floating Add Button */
+.floating-add {
+  position: fixed;
+  right: 20px;
+  bottom: 20px;
+  background: #007ACC;
+  color: white;
+  font-size: 32px;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+.floating-add:hover { background: #005fa3; }
