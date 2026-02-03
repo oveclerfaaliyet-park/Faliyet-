@@ -10,20 +10,24 @@
 <body>
 <header>
   <h1>Ayarlar</h1>
-  <button onclick="goBack()">Ana Ekran</button>
+  <button onclick="goBack()">Geri</button>
 </header>
-
 <main>
-<h2>Açılış Videosu</h2>
-<input type="file" id="openVideo">
-<h2>Duvar Kağıtları</h2>
-<input type="file" id="wallpaper">
-<h2>Ekran Koruyucu Video</h2>
-<input type="file" id="screensaver">
-<h2>PDF Oluşturma</h2>
-<label>Başlangıç Tarihi: <input type="date" id="pdfStart"></label>
-<label>Bitiş Tarihi: <input type="date" id="pdfEnd"></label>
-<button onclick="createPDF()">PDF Oluştur</button>
+  <section>
+    <h2>Açılış Videosu</h2>
+    <input type="file" id="startupVideo">
+  </section>
+  <section>
+    <h2>Duvar Kağıtları</h2>
+    <input type="file" id="wallpaperMain">
+    <input type="file" id="wallpaperPark">
+    <input type="file" id="wallpaperPersonel">
+    <input type="file" id="wallpaperEvrak">
+  </section>
+  <section>
+    <h2>Ekran Koruyucu Video</h2>
+    <input type="file" id="screensaverVideo">
+  </section>
 </main>
 </body>
 </html>
