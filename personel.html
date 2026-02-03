@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Personel</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header>
+  <h1>Personel</h1>
+  <button onclick="goBack()">Ana Ekran</button>
+</header>
+
+<main>
+  <div id="lstPersonel" class="card-container"></div>
+
+  <button id="btnAddPersonel" onclick="openAddPersonelPopup()">+</button>
+
+  <div id="addPersonelPopup" class="popup hidden">
+    <label>Adı Soyadı: <input type="text" id="txtPersonelName"></label>
+    <label>Başlangıç: <input type="date" id="dpStart"></label>
+    <label>Bitiş: <input type="date" id="dpEnd"></label>
+    <label>Açıklama: <textarea id="txtPersonelDesc"></textarea></label>
+    <label>Resim: <input type="file" id="imgPersonel"></label>
+    <button onclick="savePersonel()">Kaydet</button>
+    <button onclick="closeAddPersonelPopup()">Kapat</button>
+  </div>
+</main>
+</body>
+</html>
