@@ -1,6 +1,6 @@
 const API_URL = 'https://script.google.com/macros/s/AKfycbyBR_99DMqwD_20Wq2Um-_kC3DZ_uJm0bLX9_4ZohxUk1iHxV47tbWBOkF2KbTh1RgeTw/exec';
 
-// Ortak
+// ------------------ Ortak Fonksiyonlar ------------------
 function openScreen(page){ window.location.href=page; }
 function goBack(){ window.history.back(); }
 function filterTasks(listId,searchId){
@@ -58,10 +58,11 @@ function createCard(task,tip){
   return div;
 }
 
-// ------------------ Park ------------------
+// ------------------ Park Faaliyet ------------------
 async function loadParkList(){
   const data=await fetchData('Park Faaliyet');
   const lst=document.getElementById('lstPark');
+  if(!lst) return;
   lst.innerHTML='';
   data.reverse().forEach(t=>lst.appendChild(createCard(t,'park')));
 }
@@ -86,10 +87,14 @@ async function savePark(){
   }
 }
 
+function closeAddParkPopup(){ document.getElementById('addParkPopup')?.classList.add('hidden'); }
+
 // ------------------ Personel ------------------
 async function loadPersonelList(){
   const data=await fetchData('Personel');
-  const lst=document.getElementById('lstPersonel'); lst.innerHTML='';
+  const lst=document.getElementById('lstPersonel'); 
+  if(!lst) return;
+  lst.innerHTML='';
   data.reverse().forEach(t=>lst.appendChild(createCard(t,'personel')));
 }
 
@@ -109,10 +114,14 @@ async function savePersonel(){
   }
 }
 
-// ------------------ Evrak ------------------
+function closeAddPersonelPopup(){ document.getElementById('addPersonelPopup')?.classList.add('hidden'); }
+
+// ------------------ Evrak Takip ------------------
 async function loadEvrakList(){
   const data=await fetchData('Evrak Takip');
-  const lstGelen=document.getElementById('lstEvrakGelen'); const lstGiden=document.getElementById('lstEvrakGiden');
+  const lstGelen=document.getElementById('lstEvrakGelen'); 
+  const lstGiden=document.getElementById('lstEvrakGiden');
+  if(!lstGelen || !lstGiden) return;
   lstGelen.innerHTML=''; lstGiden.innerHTML='';
   data.reverse().forEach(task=>{
     const card=createCard(task,'evrak');
@@ -135,3 +144,24 @@ async function saveEvrak(){
     else alert('Hata: '+(res.error||''));  
   }
 }
+
+function closeAddEvrakPopup(){ document.getElementById('addEvrakPopup')?.classList.add('hidden'); }
+
+// ------------------ DOMContentLoaded ile + butonları ------------------
+document.addEventListener('DOMContentLoaded',()=>{
+    // Park
+    const btnAddPark=document.getElementById('btnAddPark');
+    if(btnAddPark) btnAddPark.addEventListener('click',()=>document.getElementById('addParkPopup').classList.remove('hidden'));
+    const btnSavePark=document.getElementById('btnSavePark');
+    if(btnSavePark) btnSavePark.addEventListener('click',savePark);
+    // Personel
+    const btnAddPersonel=document.getElementById('btnAddPersonel');
+    if(btnAddPersonel) btnAddPersonel.addEventListener('click',()=>document.getElementById('addPersonelPopup').classList.remove('hidden'));
+    const btnSavePersonel=document.getElementById('btnSavePersonel');
+    if(btnSavePersonel) btnSavePersonel.addEventListener('click',savePersonel);
+    // Evrak
+    const btnAddEvrak=document.getElementById('btnAddEvrak');
+    if(btnAddEvrak) btnAddEvrak.addEventListener('click',()=>document.getElementById('addEvrakPopup').classList.remove('hidden'));
+    const btnSaveEvrak=document.getElementById('btnSaveEvrak');
+    if(btnSaveEvrak) btnSaveEvrak.addEventListener('click',saveEvrak);
+});
