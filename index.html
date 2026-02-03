@@ -6,6 +6,7 @@
 <title>Ana Ekran</title>
 <link rel="stylesheet" href="style.css">
 <script src="app.js" defer></script>
+<link rel="manifest" href="manifest.json">
 </head>
 <body>
   <header>
@@ -16,6 +17,7 @@
   <main>
     <section id="todayTasks">
       <h2>Bugün Yapılacaklar</h2>
+      <input type="text" id="txtSearchToday" placeholder="Ara..." oninput="filterTasks('lstTodayTasks','txtSearchToday')">
       <div id="lstTodayTasks" class="card-container"></div>
     </section>
 
@@ -26,5 +28,15 @@
       <button onclick="openScreen('settings.html')">Ayarlar</button>
     </section>
   </main>
+
+<script>
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js')
+      .then(reg => console.log('SW kayıtlı', reg))
+      .catch(err => console.error('SW hatası', err));
+  });
+}
+</script>
 </body>
 </html>
