@@ -4,53 +4,125 @@
 <meta charset="UTF-8">
 <title>Park Faaliyet</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ffffff">
+
+<style>
+body{margin:0;font-family:sans-serif;background:#fff}
+#splash{
+position:fixed;inset:0;z-index:999;
+display:flex;align-items:center;justify-content:center;
+background:#000
+}
+#splash video{width:100%;height:100%;object-fit:cover}
+
+header{padding:10px;font-size:20px;font-weight:bold}
+#list{padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{border:1px solid #ddd;border-radius:10px;overflow:hidden}
+.card img{width:100%;height:120px;object-fit:cover}
+.card .info{padding:5px;font-size:12px}
+
+#addBtn{
+position:fixed;right:20px;bottom:20px;
+width:60px;height:60px;border-radius:50%;
+background:#000;color:#fff;
+display:flex;align-items:center;justify-content:center;
+font-size:30px
+}
+
+#addPage{
+position:fixed;inset:0;background:#fff;
+display:none;padding:20px
+}
+input,textarea{width:100%;margin:5px 0;padding:8px}
+</style>
 </head>
 <body>
 
-<h1 style="color:red">YENI PWA SURUMU</h1>
+<div id="splash">
+<video src="acilis.mp4" autoplay muted loop></video>
+</div>
 
-<input type="date" id="tarih"><br>
-<textarea id="aciklama" placeholder="Açıklama"></textarea><br>
-<input type="file" id="img1" accept="image/*"><br>
-<input type="file" id="img2" accept="image/*"><br>
-<button onclick="gonder()">Kaydet</button>
+<header>Park Faaliyet</header>
+<div id="list"></div>
+
+<div id="addBtn">+</div>
+
+<div id="addPage">
+<h3>Yeni Kayıt</h3>
+<input type="date" id="date">
+<textarea id="desc" placeholder="Açıklama"></textarea>
+<input type="file" id="img1" accept="image/*">
+<input type="file" id="img2" accept="image/*">
+<button onclick="sendData()">Kaydet</button>
+<button onclick="closeAdd()">Kapat</button>
+</div>
 
 <script>
-const API_URL = "APPS_SCRIPT_URL_BURAYA";
+const API_URL = "https://script.google.com/macros/s/AKfycbyKsEZ4ByvWQyd_TOO_oqYCwbp_leohm_sOyJxpvAwM7Wh7TrsgVk09zczhIZYVU51o/exec";
 
-function fileToBase64(file){
-  return new Promise(resolve=>{
-    if(!file){ resolve(""); return; }
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result);
-    reader.readAsDataURL(file);
-  });
+let idleTimer;
+function resetIdle(){
+clearTimeout(idleTimer);
+document.getElementById("splash").style.display="none";
+idleTimer=setTimeout(()=>{
+document.getElementById("splash").style.display="flex";
+},15000);
+}
+document.body.onclick=resetIdle;
+resetIdle();
+
+async function loadData(){
+const res = await fetch(API_URL);
+const data = await res.json();
+const list = document.getElementById("list");
+list.innerHTML="";
+data.forEach(r=>{
+list.innerHTML += `
+<div class="card">
+<img src="${r.resim1}">
+<img src="${r.resim2}">
+<div class="info">${r.tarih}<br>${r.aciklama}</div>
+</div>`;
+});
+}
+loadData();
+
+document.getElementById("addBtn").onclick=()=>{
+document.getElementById("addPage").style.display="block";
 }
 
-async function gonder(){
-  const tarih = document.getElementById("tarih").value;
-  const aciklama = document.getElementById("aciklama").value;
-  const f1 = document.getElementById("img1").files[0];
-  const f2 = document.getElementById("img2").files[0];
+function closeAdd(){
+document.getElementById("addPage").style.display="none";
+}
 
-  const b1 = await fileToBase64(f1);
-  const b2 = await fileToBase64(f2);
+function readFile(file){
+return new Promise(res=>{
+const r=new FileReader();
+r.onload=e=>res(e.target.result);
+r.readAsDataURL(file);
+});
+}
 
-  const payload = {
-    tarih,
-    aciklama,
-    resim1: b1,
-    resim2: b2
-  };
+async function sendData(){
+const tarih=date.value;
+const aciklama=desc.value;
+const resim1=await readFile(img1.files[0]);
+const resim2=await readFile(img2.files[0]);
 
-  const res = await fetch(API_URL, {
-    method:"POST",
-    body: JSON.stringify(payload)
-  });
+fetch(API_URL,{
+method:"POST",
+body:JSON.stringify({tarih,aciklama,resim1,resim2})
+}).then(()=>{
+alert("Kaydedildi");
+closeAdd();
+loadData();
+});
+}
 
-  const json = await res.json();
-  alert("Durum: " + json.status);
+if("serviceWorker" in navigator){
+navigator.serviceWorker.register("sw.js");
 }
 </script>
 </body>
