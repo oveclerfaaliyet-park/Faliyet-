@@ -1,15 +1,12 @@
 {
-  "name": "Kodular PWA",
-  "short_name": "Kodular",
+  "name": "Görev Uygulaması",
+  "short_name": "GörevApp",
   "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#007ACC",
-  "theme_color": "#007ACC",
-  "icons": [
-    {
-      "src": "data:image/png;base64,...",
-      "sizes": "192x192",
-      "type": "image/png"
-    }
+  "background_color": "#007BFF",
+  "theme_color": "#007BFF",
+  "icons":[
+    {"src":"icon-192.png","sizes":"192x192","type":"image/png"},
+    {"src":"icon-512.png","sizes":"512x512","type":"image/png"}
   ]
 }
