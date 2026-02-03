@@ -14,13 +14,13 @@
 </header>
 
 <main>
+<input type="text" id="txtSearchEvrak" placeholder="Ara..." oninput="filterTasks('lstEvrak','txtSearchEvrak')">
 <h2>Gelen Evrak</h2>
 <div id="lstEvrakGelen" class="card-container"></div>
-
 <h2>Giden Evrak</h2>
 <div id="lstEvrakGiden" class="card-container"></div>
 
-<button id="btnAddEvrak" onclick="openAddEvrakPopup()">+</button>
+<button id="btnAddEvrak" class="floating-add" onclick="openAddEvrakPopup()">+</button>
 
 <div id="addEvrakPopup" class="popup hidden">
   <label>Tarih: <input type="date" id="dpEvrakDate"></label>
