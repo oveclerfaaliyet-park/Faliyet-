@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Faaliyet</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header>
+  <h1>Park Faaliyet</h1>
+  <button onclick="goBack()">Ana Ekran</button>
+</header>
+
+<main>
+  <div id="lstPark" class="card-container"></div>
+
+  <button id="btnAddPark" onclick="openAddParkPopup()">+</button>
+
+  <div id="addParkPopup" class="popup hidden">
+    <label>Tarih: <input type="date" id="dpParkDate"></label>
+    <label>Açıklama: <textarea id="txtParkDesc"></textarea></label>
+    <label>Resim 1: <input type="file" id="imgPark1"></label>
+    <label>Resim 2: <input type="file" id="imgPark2"></label>
+    <button onclick="savePark()">Kaydet</button>
+    <button onclick="closeAddParkPopup()">Kapat</button>
+  </div>
+</main>
+</body>
+</html>
