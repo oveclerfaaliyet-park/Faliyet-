@@ -14,10 +14,16 @@
 </header>
 
 <main>
-<label>Açılış Videosu: <input type="file" id="vpStartupVideo" accept="video/*"></label>
-<label>Duvar Kağıdı: <input type="file" id="wallpaper" accept="image/*"></label>
-<label>Ekran Koruyucu Video: <input type="file" id="vpScreenSaver" accept="video/*"></label>
-<button onclick="createPDF()">PDF Oluştur & Paylaş</button>
+<h2>Açılış Videosu</h2>
+<input type="file" id="openVideo">
+<h2>Duvar Kağıtları</h2>
+<input type="file" id="wallpaper">
+<h2>Ekran Koruyucu Video</h2>
+<input type="file" id="screensaver">
+<h2>PDF Oluşturma</h2>
+<label>Başlangıç Tarihi: <input type="date" id="pdfStart"></label>
+<label>Bitiş Tarihi: <input type="date" id="pdfEnd"></label>
+<button onclick="createPDF()">PDF Oluştur</button>
 </main>
 </body>
 </html>
