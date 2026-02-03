@@ -13,14 +13,12 @@
   <h1>Hoşgeldin!</h1>
   <div id="lblDateTime"></div>
 </header>
-
 <main>
 <section id="todayTasks">
   <h2>Bugün Yapılacaklar</h2>
   <input type="text" id="txtSearchToday" placeholder="Ara..." oninput="filterTasks('lstTodayTasks','txtSearchToday')">
   <div id="lstTodayTasks" class="card-container"></div>
 </section>
-
 <section id="screens">
   <button onclick="openScreen('park.html')">Park Faaliyet</button>
   <button onclick="openScreen('personel.html')">Personel</button>
@@ -28,21 +26,13 @@
   <button onclick="openScreen('settings.html')">Ayarlar</button>
 </section>
 </main>
-
 <script>
 if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW kayıtlı', reg))
-      .catch(err => console.error('SW hatası', err));
-  });
+  navigator.serviceWorker.register('./sw.js')
+    .then(reg => console.log('Service Worker kayıtlı', reg))
+    .catch(err => console.error('SW hatası', err));
 }
-
-function updateDateTime(){
-  const lbl = document.getElementById('lblDateTime');
-  if(lbl) lbl.innerText = new Date().toLocaleString();
-}
-setInterval(updateDateTime,1000);
+setInterval(()=>document.getElementById('lblDateTime').innerText=new Date().toLocaleString(),1000);
 </script>
 </body>
 </html>
