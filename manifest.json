@@ -1,12 +1,15 @@
 {
-  "name": "Park Faaliyet",
-  "short_name": "Park",
-  "start_url": "./index.html",
+  "name": "Kodular PWA",
+  "short_name": "Kodular",
+  "start_url": "index.html",
   "display": "standalone",
-  "background_color": "#111111",
-  "theme_color": "#007bff",
+  "background_color": "#007ACC",
+  "theme_color": "#007ACC",
   "icons": [
-    { "src": "ikon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "ikon-512.png", "sizes": "512x512", "type": "image/png" }
+    {
+      "src": "data:image/png;base64,...",
+      "sizes": "192x192",
+      "type": "image/png"
+    }
   ]
 }
