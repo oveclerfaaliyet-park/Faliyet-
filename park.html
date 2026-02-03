@@ -10,25 +10,24 @@
 <body>
 <header>
   <h1>Park Faaliyet</h1>
-  <button onclick="goBack()">Ana Ekran</button>
+  <button onclick="goBack()">Geri</button>
 </header>
-
 <main>
-<input type="text" id="txtSearchPark" placeholder="Ara..." oninput="filterTasks('lstPark','txtSearchPark')">
-<div id="lstPark" class="card-container"></div>
+  <input type="text" id="txtSearchPark" placeholder="Ara..." oninput="filterTasks('lstPark','txtSearchPark')">
+  <div id="lstPark" class="card-container"></div>
 
-<!-- Sağ alt mavi + buton -->
-<button id="btnAddPark" class="floating-add" onclick="openAddParkPopup()">+</button>
+  <!-- Popup -->
+  <div id="addParkPopup" class="popup hidden">
+    <label>Tarih: <input type="date" id="dpParkDate"></label>
+    <label>Açıklama: <textarea id="txtParkDesc"></textarea></label>
+    <label>Resim 1: <input type="file" id="imgPark1"></label>
+    <label>Resim 2: <input type="file" id="imgPark2"></label>
+    <button id="btnSavePark">Kaydet</button>
+    <button onclick="closeAddParkPopup()">Kapat</button>
+  </div>
 
-<!-- Popup -->
-<div id="addParkPopup" class="popup hidden">
-  <label>Tarih: <input type="date" id="dpParkDate"></label>
-  <label>Açıklama: <textarea id="txtParkDesc"></textarea></label>
-  <label>Resim 1: <input type="file" id="imgPark1"></label>
-  <label>Resim 2: <input type="file" id="imgPark2"></label>
-  <button onclick="savePark()">Kaydet</button>
-  <button onclick="closeAddParkPopup()">Kapat</button>
-</div>
+  <!-- Sağ alt + buton -->
+  <button id="btnAddPark" class="floating-add">+</button>
 </main>
 </body>
 </html>
