@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Evrak Takip</title>
+<link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
+</head>
+<body>
+<header>
+  <h1>Evrak Takip</h1>
+  <button onclick="goBack()">Ana Ekran</button>
+</header>
+
+<main>
+<h2>Gelen Evrak</h2>
+<div id="lstEvrakGelen" class="card-container"></div>
+
+<h2>Giden Evrak</h2>
+<div id="lstEvrakGiden" class="card-container"></div>
+
+<button id="btnAddEvrak" onclick="openAddEvrakPopup()">+</button>
+
+<div id="addEvrakPopup" class="popup hidden">
+  <label>Tarih: <input type="date" id="dpEvrakDate"></label>
+  <label>Açıklama: <textarea id="txtEvrakDesc"></textarea></label>
+  <label>Tip:
+    <select id="spEvrakType">
+      <option value="Gelen">Gelen</option>
+      <option value="Giden">Giden</option>
+    </select>
+  </label>
+  <label>Resim: <input type="file" id="imgEvrak"></label>
+  <button onclick="saveEvrak()">Kaydet</button>
+  <button onclick="closeAddEvrakPopup()">Kapat</button>
+</div>
+</main>
+</body>
+</html>
