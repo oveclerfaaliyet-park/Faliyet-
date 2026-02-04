@@ -13,11 +13,13 @@
   <button onclick="window.history.back()">⬅ Geri</button>
 </header>
 <main>
-  <button onclick="openAddModal('Personel')">Yeni Kayıt Ekle</button>
+  <button onclick="openAddModal('Personel',1)">Yeni Kayıt Ekle</button>
   <div id="list"></div>
   <button onclick="deleteSelected('Personel')">Seçilenleri Sil</button>
   <button onclick="editSelected('Personel')">Seçilenleri Düzenle</button>
 </main>
-<script>loadData('Personel');</script>
+<script>
+loadData('Personel');
+</script>
 </body>
 </html>
