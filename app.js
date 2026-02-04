@@ -1,5 +1,5 @@
-const SHEET_ID = "1fgUyLnzVGtdXcB3jUwJjfm5Vhblauz6civEMouYLXYc";
-const FOLDER_ID = "1xmTD_y26fjXhIJiXbDvh5C9ozvDPDPPD"; // Saha_resim klasörü
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw7AXQgZew2qj_q_4n78kUpdmcWWsTGuQd0UOovYZfpzKcPyicxicShDXX7endBgx7lmw/exec";
+const FOLDER_ID = "1xmTD_y26fjXhIJiXbDvh5C9ozvDPDPPD";
 
 // ------------------ VERİ ÇEKME ------------------
 async function loadData(sayfa){
@@ -24,8 +24,7 @@ function renderList(veriler,sayfa){
         const div = document.createElement("div");
         div.className = "listItem";
 
-        // Park/Evrak resim 80x80
-        if(row[0]){ 
+        if(row[0]){
             const img = document.createElement("img");
             img.src = row[0];
             img.width=80; img.height=80;
@@ -131,11 +130,56 @@ async function deleteSelected(sayfa){
 // ------------------ SEÇİLENİ DÜZENLE ------------------
 async function editSelected(sayfa){
     const listEl = document.getElementById("list");
-    const selected = Array.from(listEl.querySelectorAll("input[type=checkbox]:checked")).map(i=>parseInt(i.dataset.index));
+    const selected = Array.from(listEl.querySelectorAll("input[type=checkbox]:checked"))
+                          .map(i=>parseInt(i.dataset.index));
     if(selected.length!=1) return alert("Lütfen tek kayıt seçin.");
+
     const idx = selected[0];
-    // TODO: Modal ile düzenleme açılacak, aynı ekleme mantığı kullanılacak
-    alert("Düzenleme modalı burada açılacak");
+    const res = await fetch(`${SCRIPT_URL}?sayfa=${encodeURIComponent(sayfa)}`);
+    const data = await res.json();
+    if(data.durum!="ok") return alert(data.mesaj);
+
+    const row = data.veriler[idx];
+
+    const modal = document.createElement("div");
+    modal.className="modal";
+    modal.innerHTML = `<div class="modalContent">
+        <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+        <h3>Düzenle - ${sayfa}</h3>
+        <img src="${row[0]}" style="width:100px;height:100px; display:block; margin:auto">
+        Resim değiştir: <input type="file" id="editResim" accept="image/*"><br>
+        Tarih: <input type="date" id="editTarih" value="${row[1]}"><br>
+        Açıklama: <input type="text" id="editAciklama" value="${row[2]}"><br>
+        <button onclick="saveEdit('${sayfa}',${idx})">Kaydet</button>
+    </div>`;
+    document.body.appendChild(modal);
+}
+
+// ------------------ KAYDET DÜZENLE ------------------
+async function saveEdit(sayfa,idx){
+    const fileInput = document.getElementById("editResim");
+    const tarih = document.getElementById("editTarih").value;
+    const aciklama = document.getElementById("editAciklama").value;
+
+    let url = null;
+    if(fileInput.files.length){
+        const base64 = await toBase64(fileInput.files[0]);
+        url = await saveFileToDrive(base64,fileInput.files[0].name);
+    }
+
+    const res = await fetch(SCRIPT_URL,{
+        method:"POST",
+        body: JSON.stringify({
+            sayfa,
+            action:"duzenle",
+            index:idx,
+            satir: url ? [url,tarih,aciklama] : [null,tarih,aciklama]
+        })
+    });
+    const data = await res.json();
+    if(data.durum!="ok") return alert(data.mesaj);
+    document.querySelector(".modal").remove();
+    loadData(sayfa);
 }
 
 // ------------------ PDF OLUŞTUR ------------------
