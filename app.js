@@ -1,5 +1,6 @@
 const API_URL = "https://script.google.com/macros/s/AKfycbw7AXQgZew2qj_q_4n78kUpdmcWWsTGuQd0UOovYZfpzKcPyicxicShDXX7endBgx7lmw/exec";
 
+// KAYIT
 function kaydet(sayfa, alanlar) {
   fetch(API_URL, {
     method: "POST",
@@ -10,12 +11,17 @@ function kaydet(sayfa, alanlar) {
   })
   .then(r => r.json())
   .then(d => {
-    alert("Kayıt OK");
-    location.reload();
+    if (d.durum == "ok") {
+      alert("Kayıt Başarılı");
+      location.reload();
+    } else {
+      alert(d.mesaj);
+    }
   })
-  .catch(err => alert("Hata: " + err));
+  .catch(err => alert("Bağlantı hatası"));
 }
 
+// LİSTE
 function veriGetir(sayfa, hedef) {
   fetch(API_URL + "?sayfa=" + encodeURIComponent(sayfa))
     .then(r => r.json())
@@ -28,6 +34,14 @@ function veriGetir(sayfa, hedef) {
     });
 }
 
+// Saat
+function saatBaslat() {
+  setInterval(()=>{
+    document.getElementById("saat").innerText = new Date().toLocaleString();
+  },1000);
+}
+
+// PWA
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js");
 }
