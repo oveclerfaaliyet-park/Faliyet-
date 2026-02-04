@@ -8,26 +8,20 @@
 <script src="app.js" defer></script>
 </head>
 <body>
-<header>
-  <h1>Saha Takip</h1>
-  <nav>
-    <button onclick="goPage('park.html')">Park Faliyet</button>
-    <button onclick="goPage('personel.html')">Personel</button>
-    <button onclick="goPage('evrak.html')">Evrak Takip</button>
-    <button onclick="goPage('ayarlar.html')">Ayarlar</button>
-  </nav>
-</header>
-<main>
-  <div class="home">
-    <h2>Hoşgeldiniz</h2>
-    <p>Tarih ve saat: <span id="dateTime"></span></p>
-  </div>
-</main>
+<h1>Saha Takip Uygulaması</h1>
+<nav>
+  <button onclick="showPage('Park Faliyet')">Park Faliyet</button>
+  <button onclick="showPage('Personel')">Personel</button>
+  <button onclick="showPage('Evrak')">Evrak</button>
+  <button onclick="showPage('Ayarlar')">Ayarlar</button>
+</nav>
+
+<div id="content"></div>
+
 <script>
-function goPage(url){ window.location.href = url; }
-function updateTime(){ document.getElementById('dateTime').innerText = new Date().toLocaleString(); }
-setInterval(updateTime,1000);
-updateTime();
+document.addEventListener("DOMContentLoaded",()=>{
+    showPage('Park Faliyet'); // başlangıç sayfası
+});
 </script>
 </body>
 </html>
