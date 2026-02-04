@@ -1,15 +1,12 @@
 <body onload="veriGetir('Evrak Takip','liste')">
-<h2>Evrak</h2>
-
+<h3>Evrak</h3>
 <input id="tarih" type="date">
-<select id="tur">
-<option>Gelen</option>
-<option>Giden</option>
-</select>
+<select id="tur"><option>Gelen</option><option>Giden</option></select>
 <textarea id="aciklama"></textarea>
 <button onclick="kaydet('Evrak Takip',[tarih.value,tur.value,aciklama.value])">Kaydet</button>
-
 <table><tbody id="liste"></tbody></table>
+<button onclick="pdfYap('liste')">PDF</button>
 <div class="fab">+</div>
 <script src="app.js"></script>
+<script src="pdf.js"></script>
 </body>
