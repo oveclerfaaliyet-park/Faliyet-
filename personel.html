@@ -1,13 +1,43 @@
-<body onload="veriGetir('Personel','liste')">
-<h3>Personel</h3>
-<input id="ad">
-<input id="bas" type="date">
-<input id="bit" type="date">
-<textarea id="aciklama"></textarea>
-<button onclick="kaydet('Personel',[ad.value,bas.value,bit.value,aciklama.value])">Kaydet</button>
-<table><tbody id="liste"></tbody></table>
-<button onclick="pdfYap('liste')">PDF</button>
-<div class="fab">+</div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Personel</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body id="personel">
+
+<header><h2>Personel</h2></header>
+
+<div class="form">
+  <input id="ad" placeholder="Ad Soyad">
+  <input id="dogum" type="date">
+  <input id="isegiris" type="date">
+  <input id="aciklama" placeholder="Açıklama">
+</div>
+
+<div id="liste" class="liste"></div>
+
+<div class="bottom">
+  <button class="primary" onclick="kaydetPersonel()">Kaydet</button>
+  <button class="danger" onclick="silKayit()">Sil</button>
+</div>
+
 <script src="app.js"></script>
-<script src="pdf.js"></script>
+<script src="settings.js"></script>
+<script>
+applyTheme('personel');
+veriGetir('Personel');
+
+function kaydetPersonel(){
+  kaydet([
+    ad.value,
+    dogum.value,
+    isegiris.value,
+    aciklama.value
+  ]);
+}
+</script>
 </body>
+</html>
