@@ -1,13 +1,13 @@
 <body onload="veriGetir('Personel','liste')">
-<h2>Personel</h2>
-
-<input id="ad" placeholder="Ad Soyad">
+<h3>Personel</h3>
+<input id="ad">
 <input id="bas" type="date">
 <input id="bit" type="date">
-<textarea id="aciklama" placeholder="Açıklama"></textarea>
+<textarea id="aciklama"></textarea>
 <button onclick="kaydet('Personel',[ad.value,bas.value,bit.value,aciklama.value])">Kaydet</button>
-
 <table><tbody id="liste"></tbody></table>
+<button onclick="pdfYap('liste')">PDF</button>
 <div class="fab">+</div>
 <script src="app.js"></script>
+<script src="pdf.js"></script>
 </body>
