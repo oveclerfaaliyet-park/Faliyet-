@@ -5,22 +5,29 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Saha Takip</title>
 <link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
 </head>
 <body>
-<div class="header">
-  <h1>Saha Takip Uygulaması</h1>
-</div>
-
-<div class="menu">
-  <button onclick="gotoPage('park.html')">Park Faaliyet</button>
-  <button onclick="gotoPage('personel.html')">Personel</button>
-  <button onclick="gotoPage('evrak.html')">Evrak Takip</button>
-  <button onclick="gotoPage('ayarlar.html')">Ayarlar</button>
-</div>
-
-<script src="app.js"></script>
+<header>
+  <h1>Saha Takip</h1>
+  <nav>
+    <button onclick="goPage('park.html')">Park Faliyet</button>
+    <button onclick="goPage('personel.html')">Personel</button>
+    <button onclick="goPage('evrak.html')">Evrak Takip</button>
+    <button onclick="goPage('pdf.html')">PDF</button>
+  </nav>
+</header>
+<main>
+  <div class="home">
+    <h2>Hoşgeldiniz</h2>
+    <p>Tarih ve saat: <span id="dateTime"></span></p>
+  </div>
+</main>
 <script>
-function gotoPage(page) { window.location.href = page; }
+function goPage(url){ window.location.href = url; }
+function updateTime(){ document.getElementById('dateTime').innerText = new Date().toLocaleString(); }
+setInterval(updateTime,1000);
+updateTime();
 </script>
 </body>
 </html>
