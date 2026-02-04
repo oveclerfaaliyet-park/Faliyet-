@@ -1,5 +1,4 @@
 const SCRIPT_URL="https://script.google.com/macros/s/AKfycbw7AXQgZew2qj_q_4n78kUpdmcWWsTGuQd0UOovYZfpzKcPyicxicShDXX7endBgx7lmw/exec";
-const FOLDER_ID="1xmTD_y26fjXhIJiXbDvh5C9ozvDPDPPD";
 
 // Sayfa geçişi
 function showPage(page){
@@ -51,7 +50,7 @@ async function loadData(sayfa){
     }
 }
 
-// --- PARK FALİYET ---
+// --- Park Faliyet ---
 function loadParkFaliyet(content){
     content.innerHTML=`
     <h2>Park Faliyet</h2>
@@ -98,7 +97,7 @@ function renderParkList(veriler){
     });
 }
 
-// --- PERSONEL ---
+// --- Personel ---
 function loadPersonel(content){
     content.innerHTML=`
     <h2>Personel</h2>
@@ -143,7 +142,7 @@ function renderPersonelList(veriler){
     });
 }
 
-// --- EVRAK ---
+// --- Evrak ---
 function loadEvrak(content){
     content.innerHTML=`
     <h2>Evrak</h2>
@@ -194,7 +193,7 @@ async function deleteRow(sayfa,index){
     loadData(sayfa);
 }
 
-// --- AYARLAR ---
+// --- Ayarlar ---
 function loadAyarlar(content){
     content.innerHTML = `
     <h2>Ayarlar</h2>
