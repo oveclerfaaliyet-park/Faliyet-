@@ -1,24 +1,45 @@
-const URL = "https://script.google.com/macros/library/d/1ZXDH1DH6Q86C3zazGuE1DaoGSQ1kjq6tPkhBnKkwePF1kwW-Zqnxbz8E/2";
+const BASE_URL = "https://script.google.com/macros/s/AKfycbw7AXQgZew2qj_q_4n78kUpdmcWWsTGuQd0UOovYZfpzKcPyicxicShDXX7endBgx7lmw/exec";
 
-function kaydet(satir){ 
-  fetch(URL, {method:"POST", body:JSON.stringify({satir, sayfa:currentSayfa})})
-  .then(r=>r.json()).then(res=>veriGetir(currentSayfa));
-}
+// Veri çek
+async function loadData(sayfa){
+  const res = await fetch(`${BASE_URL}?sayfa=${encodeURIComponent(sayfa)}`);
+  const data = await res.json();
+  const listDiv = document.getElementById('list');
+  listDiv.innerHTML = '';
 
-function silKayit(index){
-  fetch(URL, {method:"POST", body:JSON.stringify({action:"sil", index, sayfa:currentSayfa})})
-  .then(r=>r.json()).then(res=>veriGetir(currentSayfa));
-}
+  if(data.durum !== 'ok') { listDiv.innerHTML = data.mesaj; return; }
 
-function veriGetir(sayfa){
-  window.currentSayfa = sayfa;
-  fetch(URL+"?sayfa="+sayfa)
-  .then(r=>r.json())
-  .then(data=>{
-    let html = "";
-    data.veriler.forEach((v,i)=>html+=`<div class="satir" onclick="selectRow(${i})">${v.join(" | ")}</div>`);
-    document.getElementById("liste").innerHTML = html;
+  data.veriler.forEach((row, i)=>{
+    const div = document.createElement('div');
+    div.className = 'row';
+    div.innerHTML = `<span>${row.join(' | ')}</span>
+                     <button onclick="editRow(${i}, '${sayfa}')">Düzenle</button>
+                     <button onclick="deleteRow(${i}, '${sayfa}')">Sil</button>`;
+    listDiv.appendChild(div);
   });
 }
 
-function selectRow(i){ window.selectedIndex=i; }
+// Sil
+async function deleteRow(index, sayfa){
+  if(!confirm('Silmek istiyor musunuz?')) return;
+  await fetch(BASE_URL, { method:'POST', body: JSON.stringify({ action:'sil', index, sayfa, satir:[] }) });
+  loadData(sayfa);
+}
+
+// Düzenle
+async function editRow(index, sayfa){
+  const text = prompt('Yeni değerleri | ile ayırın:');
+  if(!text) return;
+  const satir = text.split('|').map(s=>s.trim());
+  await fetch(BASE_URL,{ method:'POST', body: JSON.stringify({ action:'duzenle', index, sayfa, satir }) });
+  loadData(sayfa);
+}
+
+// Yeni kayıt
+async function openAddModal(sayfa){
+  const text = prompt('Yeni değerleri | ile ayırın:');
+  if(!text) return;
+  const satir = text.split('|').map(s=>s.trim());
+  await fetch(BASE_URL,{ method:'POST', body: JSON.stringify({ action:'ekle', sayfa, satir }) });
+  loadData(sayfa);
+}
