@@ -1,6 +1,8 @@
+const CACHE_NAME = "takip-v2";
+
 self.addEventListener("install", e => {
   e.waitUntil(
-    caches.open("takip-v1").then(cache => {
+    caches.open(CACHE_NAME).then(cache => {
       return cache.addAll([
         "./",
         "./index.html",
@@ -9,7 +11,8 @@ self.addEventListener("install", e => {
         "./evrak.html",
         "./settings.html",
         "./style.css",
-        "./app.js"
+        "./app.js",
+        "./manifest.json"
       ]);
     })
   );
