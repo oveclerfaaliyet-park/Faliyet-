@@ -9,21 +9,29 @@
 <body id="park">
 
 <header>
-  <button class="geri" onclick="history.back()">← Geri</button>
+  <button class="geri"><img src="icons/back.svg" onclick="history.back()"></button>
   <h2>Park Faaliyet</h2>
   <span id="saatTarih"></span>
 </header>
 
-<div class="form">
-  <input id="tarih" type="date">
-  <input id="aciklama" placeholder="Açıklama">
-  <input id="resim" type="file" accept="image/*">
-</div>
-
 <div id="liste" class="liste"></div>
 
+<button class="floating-btn" onclick="acEkleModal()">
+  <img src="icons/plus.svg" alt="Ekle">
+</button>
+
+<div id="modalEkle" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="kapatModal()">&times;</span>
+    <h3>Yeni Park Faaliyet Ekle</h3>
+    <input type="date" id="tarihModal">
+    <input type="text" id="aciklamaModal" placeholder="Açıklama">
+    <input type="file" id="resimModal" accept="image/*">
+    <button onclick="kaydetModal()">Kaydet</button>
+  </div>
+</div>
+
 <div class="bottom">
-  <button class="primary" onclick="kaydetPark()">Kaydet</button>
   <button class="danger" onclick="silKayit()">Sil</button>
 </div>
 
@@ -34,15 +42,19 @@ applyTheme('park');
 saatTarihGoster();
 veriGetir('Park Faliyet');
 
-function kaydetPark(){
-  let tarih = document.getElementById("tarih").value;
-  let aciklama = document.getElementById("aciklama").value;
-  let resim = document.getElementById("resim").files[0];
+function acEkleModal(){ document.getElementById("modalEkle").classList.remove("hidden"); }
+function kapatModal(){ document.getElementById("modalEkle").classList.add("hidden"); }
+
+function kaydetModal(){
+  let tarih = document.getElementById("tarihModal").value;
+  let aciklama = document.getElementById("aciklamaModal").value;
+  let resim = document.getElementById("resimModal").files[0];
   if(resim){
     let reader = new FileReader();
     reader.onload = ()=>kaydet([tarih, aciklama, reader.result]);
     reader.readAsDataURL(resim);
   } else kaydet([tarih, aciklama, ""]);
+  kapatModal();
 }
 </script>
 </body>
