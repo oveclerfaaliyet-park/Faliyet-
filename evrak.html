@@ -8,7 +8,11 @@
 </head>
 <body id="evrak">
 
-<header><h2>Evrak Takip</h2></header>
+<header>
+  <button class="geri" onclick="history.back()">← Geri</button>
+  <h2>Evrak Takip</h2>
+  <span id="saatTarih"></span>
+</header>
 
 <div class="form">
   <input id="tarih" type="date">
@@ -27,14 +31,18 @@
 <script src="settings.js"></script>
 <script>
 applyTheme('evrak');
+saatTarihGoster();
 veriGetir('Evrak Takip');
 
 function kaydetEvrak(){
-  let reader = new FileReader();
-  let file = resim.files[0];
-  reader.onload = ()=> kaydet([tarih.value, aciklama.value, reader.result]);
-  if(file) reader.readAsDataURL(file);
-  else kaydet([tarih.value, aciklama.value, ""]);
+  let tarih = document.getElementById("tarih").value;
+  let aciklama = document.getElementById("aciklama").value;
+  let resim = document.getElementById("resim").files[0];
+  if(resim){
+    let reader = new FileReader();
+    reader.onload = ()=>kaydet([tarih, aciklama, reader.result]);
+    reader.readAsDataURL(resim);
+  } else kaydet([tarih, aciklama, ""]);
 }
 </script>
 </body>
