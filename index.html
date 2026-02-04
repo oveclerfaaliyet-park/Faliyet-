@@ -19,18 +19,16 @@
 </header>
 
 <div class="menu">
-  <button onclick="go('park.html')">Park Faaliyet</button>
-  <button onclick="go('personel.html')">Personel</button>
-  <button onclick="go('evrak.html')">Evrak Takip</button>
-  <button onclick="go('settings.html')">Ayarlar</button>
+  <button onclick="go('park.html')"><img src="icons/park.svg">Park Faaliyet</button>
+  <button onclick="go('personel.html')"><img src="icons/personel.svg">Personel</button>
+  <button onclick="go('evrak.html')"><img src="icons/evrak.svg">Evrak Takip</button>
+  <button onclick="go('settings.html')"><img src="icons/settings.svg">Ayarlar</button>
 </div>
 
 <script src="app.js"></script>
 <script src="settings.js"></script>
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
 applyTheme('main');
 playSplash();
 saatTarihGoster();
