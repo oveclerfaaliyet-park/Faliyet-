@@ -5,23 +5,15 @@
 <link rel="stylesheet" href="style.css">
 <script src="app.js"></script>
 </head>
-<body>
+<body onload="saatBaslat()">
 <header>
-<h2>Hoşgeldin</h2>
+<h2>Saha Takip</h2>
 <div id="saat"></div>
 </header>
 
-<ul>
-<li><a href="park.html">Park</a></li>
-<li><a href="personel.html">Personel</a></li>
-<li><a href="evrak.html">Evrak</a></li>
-<li><a href="settings.html">Ayarlar</a></li>
-</ul>
-
-<script>
-setInterval(()=>{
-  document.getElementById("saat").innerText = new Date().toLocaleString();
-},1000);
-</script>
+<a href="park.html">Park Faaliyet</a>
+<a href="personel.html">Personel</a>
+<a href="evrak.html">Evrak Takip</a>
+<a href="settings.html">Ayarlar</a>
 </body>
 </html>
