@@ -3,25 +3,21 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Park Faaliyet</title>
+<title>Park Faliyet</title>
 <link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
 </head>
 <body>
-<div class="header">
-  <button onclick="goBack()">← Geri</button>
-  <h2>Park Faaliyet</h2>
-</div>
-
-<div class="content">
+<header>
+  <h1>Park Faliyet</h1>
+  <button onclick="window.history.back()">⬅ Geri</button>
+</header>
+<main>
   <button onclick="openAddModal('Park Faliyet')">Yeni Kayıt Ekle</button>
   <div id="list"></div>
-</div>
-
-<script src="app.js"></script>
-<script>
-const SAYFA = "Park Faliyet";
-loadData(SAYFA);
-function goBack(){ window.location.href='index.html'; }
-</script>
+  <button onclick="deleteSelected('Park Faliyet')">Seçilenleri Sil</button>
+  <button onclick="editSelected('Park Faliyet')">Seçilenleri Düzenle</button>
+</main>
+<script>loadData('Park Faliyet');</script>
 </body>
 </html>
