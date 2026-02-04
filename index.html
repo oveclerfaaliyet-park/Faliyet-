@@ -2,37 +2,25 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Saha Takip</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="manifest" href="manifest.json">
+<title>Saha Takip</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body id="main">
-
-<div id="splash" class="splash hidden">
-  <video id="splashVideo" autoplay muted></video>
+<body>
+<div class="header">
+  <h1>Saha Takip Uygulaması</h1>
 </div>
 
-<header>
-  <h1>Saha Takip</h1>
-  <span id="saatTarih"></span>
-</header>
-
 <div class="menu">
-  <button onclick="go('park.html')"><img src="icons/park.svg">Park Faaliyet</button>
-  <button onclick="go('personel.html')"><img src="icons/personel.svg">Personel</button>
-  <button onclick="go('evrak.html')"><img src="icons/evrak.svg">Evrak Takip</button>
-  <button onclick="go('settings.html')"><img src="icons/settings.svg">Ayarlar</button>
+  <button onclick="gotoPage('park.html')">Park Faaliyet</button>
+  <button onclick="gotoPage('personel.html')">Personel</button>
+  <button onclick="gotoPage('evrak.html')">Evrak Takip</button>
+  <button onclick="gotoPage('ayarlar.html')">Ayarlar</button>
 </div>
 
 <script src="app.js"></script>
-<script src="settings.js"></script>
 <script>
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');
-applyTheme('main');
-playSplash();
-saatTarihGoster();
-function go(p){ location.href = p; }
+function gotoPage(page) { window.location.href = page; }
 </script>
 </body>
 </html>
