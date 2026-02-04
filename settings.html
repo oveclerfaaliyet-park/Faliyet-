@@ -8,13 +8,16 @@
 </head>
 <body id="settings">
 
-<h2>Ayarlar</h2>
+<header>
+  <button class="geri" onclick="history.back()">← Geri</button>
+  <h2>Ayarlar</h2>
+  <span id="saatTarih"></span>
+</header>
 
 <h3>Duvar Kağıdı</h3>
-<input type="file" onchange="setBg(event,'main')">
-<input type="file" onchange="setBg(event,'park')">
-<input type="file" onchange="setBg(event,'personel')">
-<input type="file" onchange="setBg(event,'evrak')">
+Park: <input type="file" onchange="setBg(event,'park')">
+Personel: <input type="file" onchange="setBg(event,'personel')">
+Evrak: <input type="file" onchange="setBg(event,'evrak')">
 
 <h3>Açılış Videosu</h3>
 <input type="file" onchange="setVideo(event,'splash')">
@@ -25,16 +28,27 @@
 <hr>
 
 <h3>PDF</h3>
-Başlangıç <input id="bas" type="date">
-Bitiş <input id="bit" type="date">
+Başlangıç: <input id="bas" type="date">
+Bitiş: <input id="bit" type="date">
 <select id="pdfSayfa">
 <option>Park Faliyet</option>
 <option>Personel</option>
 <option>Evrak Takip</option>
 </select>
-<button onclick="pdfOlustur()">PDF Oluştur</button>
+<button onclick="pdfOlusturPDF()">PDF Oluştur</button>
 
 <script src="settings.js"></script>
 <script src="pdf.js"></script>
+<script>
+applyTheme('settings');
+saatTarihGoster();
+
+function pdfOlusturPDF(){
+  let bas = document.getElementById("bas").value;
+  let bit = document.getElementById("bit").value;
+  let sayfa = document.getElementById("pdfSayfa").value;
+  pdfOlustur(sayfa, bas, bit);
+}
+</script>
 </body>
 </html>
