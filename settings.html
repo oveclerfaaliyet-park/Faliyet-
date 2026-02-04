@@ -6,33 +6,71 @@
 <title>Ayarlar</title>
 <link rel="stylesheet" href="style.css">
 <script src="app.js" defer></script>
+<style>
+body { font-family: sans-serif; padding:10px; }
+h2{ text-align:center; margin-bottom:10px; }
+.settingGroup{ margin-bottom:20px; border:1px solid #ddd; padding:10px; border-radius:5px; }
+.settingGroup label{ display:block; margin:5px 0; font-weight:bold; }
+.settingGroup input, .settingGroup select{ width:100%; padding:5px; margin-bottom:10px; }
+button{ padding:10px 15px; margin-top:5px; background:#2E8B57; color:white; border:none; border-radius:5px; cursor:pointer; }
+button:hover{ background:#246B45; }
+</style>
 </head>
 <body>
-<header>
-  <h1>Ayarlar</h1>
-  <button onclick="window.history.back()">⬅ Geri</button>
-</header>
-<main>
-<h3>PDF Ayarları</h3>
-Başlangıç: <input id="bas" type="date">
-Bitiş: <input id="bit" type="date">
-<select id="pdfSayfa">
-<option>Park Faliyet</option>
-<option>Personel</option>
-<option>Evrak Takip</option>
-</select>
-<button onclick="pdfOlustur()">PDF Oluştur</button>
+<h2>Ayarlar</h2>
 
-<h3>Açılış Videosu</h3>
-<input type="file" id="acilisVideo" accept="video/*">
+<div class="settingGroup">
+  <h3>Video Ayarları</h3>
+  <label for="acilisVideo">Açılış Videosu:</label>
+  <input type="file" id="acilisVideo" accept="video/*">
+  
+  <label for="ekranKoruyucu">Ekran Koruyucu Videosu:</label>
+  <input type="file" id="ekranKoruyucu" accept="video/*">
+</div>
 
-<h3>Ekran Koruyucu Videosu</h3>
-<input type="file" id="ekranVideo" accept="video/*">
+<div class="settingGroup">
+  <h3>Duvar Kağıdı Seçimi</h3>
+  <label for="parkWallpaper">Park Faliyet:</label>
+  <input type="file" id="parkWallpaper" accept="image/*">
 
-<h3>Duvar Kağıtları</h3>
-Park Faliyet: <input type="file" id="wallPark" accept="image/*"><br>
-Personel: <input type="file" id="wallPersonel" accept="image/*"><br>
-Evrak: <input type="file" id="wallEvrak" accept="image/*"><br>
-</main>
+  <label for="personelWallpaper">Personel:</label>
+  <input type="file" id="personelWallpaper" accept="image/*">
+
+  <label for="evrakWallpaper">Evrak:</label>
+  <input type="file" id="evrakWallpaper" accept="image/*">
+</div>
+
+<button onclick="saveSettings()">Ayarları Kaydet</button>
+
+<script>
+document.addEventListener("DOMContentLoaded",()=>{
+    // Sayfa açıldığında localStorage'dan yükle
+    const keys=["acilisVideo","ekranKoruyucu","parkWallpaper","personelWallpaper","evrakWallpaper"];
+    keys.forEach(k=>{
+        const val = localStorage.getItem(k);
+        if(val){
+            const input = document.getElementById(k);
+            input.dataset.saved = val; // görsel veya video URLsi saklanabilir
+        }
+    });
+});
+
+// Kaydetme fonksiyonu
+function saveSettings(){
+    const keys=["acilisVideo","ekranKoruyucu","parkWallpaper","personelWallpaper","evrakWallpaper"];
+    keys.forEach(k=>{
+        const input = document.getElementById(k);
+        if(input.files.length){
+            const file = input.files[0];
+            toBase64(file).then(base64=>{
+                localStorage.setItem(k,base64);
+                alert(k + " kaydedildi!");
+            });
+        }else if(input.dataset.saved){
+            // zaten kayıtlıysa tekrar kaydetmeye gerek yok
+        }
+    });
+}
+</script>
 </body>
 </html>
