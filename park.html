@@ -1,11 +1,11 @@
 <body onload="veriGetir('Park Faliyet','liste')">
-<h2>Park Faaliyet</h2>
-
+<h3>Park</h3>
 <input id="tarih" type="date">
-<textarea id="aciklama" placeholder="Açıklama"></textarea>
+<textarea id="aciklama"></textarea>
 <button onclick="kaydet('Park Faliyet',[tarih.value,aciklama.value])">Kaydet</button>
-
 <table><tbody id="liste"></tbody></table>
+<button onclick="pdfYap('liste')">PDF</button>
 <div class="fab">+</div>
 <script src="app.js"></script>
+<script src="pdf.js"></script>
 </body>
