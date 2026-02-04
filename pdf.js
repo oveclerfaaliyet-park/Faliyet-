@@ -1,13 +1,11 @@
-function pdfYap(tabloId){
-  const { jsPDF } = window.jspdf;
-  let doc=new jsPDF();
-  doc.text("Rapor",10,10);
-  let rows=[];
-  document.querySelectorAll("#"+tabloId+" tr").forEach(tr=>{
-    let r=[];
-    tr.querySelectorAll("td").forEach(td=>r.push(td.innerText));
-    rows.push(r);
-  });
-  doc.autoTable({ startY:20, body:rows });
-  doc.save("rapor.pdf");
-}
+<h3>PDF</h3>
+Başlangıç <input id="bas" type="date">
+Bitiş <input id="bit" type="date">
+
+<select id="pdfSayfa">
+<option>Park Faliyet</option>
+<option>Personel</option>
+<option>Evrak Takip</option>
+</select>
+
+<button onclick="pdfOlustur()">PDF Oluştur</button>
