@@ -81,22 +81,6 @@ async function saveParkFaliyet(){
     loadData("Park Faliyet");
 }
 
-function renderParkList(veriler){
-    const container=document.getElementById("parkList");
-    container.innerHTML="";
-    veriler.forEach((row,i)=>{
-        const div=document.createElement("div");
-        div.className="listItem";
-        div.innerHTML=`
-        <img src="${row[2]||''}" width="80" height="80">
-        <img src="${row[3]||''}" width="80" height="80">
-        <span>${row[0]} - ${row[1]}</span>
-        <button onclick="deleteRow('Park Faliyet',${i})">Sil</button>
-        `;
-        container.appendChild(div);
-    });
-}
-
 // --- Personel ---
 function loadPersonel(content){
     content.innerHTML=`
@@ -127,21 +111,6 @@ async function savePersonel(){
     loadData("Personel");
 }
 
-function renderPersonelList(veriler){
-    const container=document.getElementById("personelList");
-    container.innerHTML="";
-    veriler.forEach((row,i)=>{
-        const div=document.createElement("div");
-        div.className="listItem";
-        div.innerHTML=`
-        <img src="${row[4]||''}" width="80" height="80">
-        <span>${row[0]} - ${row[1]} / ${row[2]} - ${row[3]}</span>
-        <button onclick="deleteRow('Personel',${i})">Sil</button>
-        `;
-        container.appendChild(div);
-    });
-}
-
 // --- Evrak ---
 function loadEvrak(content){
     content.innerHTML=`
@@ -169,21 +138,6 @@ async function saveEvrak(){
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Evrak",satir})});
     alert("Kaydedildi!");
     loadData("Evrak");
-}
-
-function renderEvrakList(veriler){
-    const container=document.getElementById("evrakList");
-    container.innerHTML="";
-    veriler.forEach((row,i)=>{
-        const div=document.createElement("div");
-        div.className="listItem";
-        div.innerHTML=`
-        <img src="${row[3]||''}" width="80" height="80">
-        <span>${row[0]} - ${row[1]} (${row[2]})</span>
-        <button onclick="deleteRow('Evrak',${i})">Sil</button>
-        `;
-        container.appendChild(div);
-    });
 }
 
 // --- Silme ---
