@@ -12,17 +12,17 @@ function showPage(page){
 }
 
 // --- Resim küçültme ---
-function resizeImage(file, maxWidth=800){
+function resizeImage(file,maxWidth=800){
     return new Promise(resolve=>{
-        const img = new Image();
-        const reader = new FileReader();
-        reader.onload = e=>{ img.src = e.target.result; };
-        img.onload = ()=>{
-            const scale = Math.min(maxWidth/img.width,1);
-            const canvas = document.createElement("canvas");
-            canvas.width = img.width*scale;
-            canvas.height = img.height*scale;
-            const ctx = canvas.getContext("2d");
+        const img=new Image();
+        const reader=new FileReader();
+        reader.onload=e=>{ img.src=e.target.result; };
+        img.onload=()=>{
+            const scale=Math.min(maxWidth/img.width,1);
+            const canvas=document.createElement("canvas");
+            canvas.width=img.width*scale;
+            canvas.height=img.height*scale;
+            const ctx=canvas.getContext("2d");
             ctx.drawImage(img,0,0,canvas.width,canvas.height);
             resolve(canvas.toDataURL("image/png"));
         };
@@ -30,20 +30,20 @@ function resizeImage(file, maxWidth=800){
     });
 }
 
-// Drive'a kaydet
+// Drive'a yükle
 async function saveFileToDrive(base64,name){
-    const res = await fetch(SCRIPT_URL,{
+    const res=await fetch(SCRIPT_URL,{
         method:"POST",
         body: JSON.stringify({action:"upload",fileData:base64,fileName:name})
     });
-    const data = await res.json();
+    const data=await res.json();
     return data.url || null;
 }
 
-// Veri çekme
+// Veri çek
 async function loadData(sayfa){
-    const res = await fetch(`${SCRIPT_URL}?sayfa=${sayfa}`);
-    const data = await res.json();
+    const res=await fetch(`${SCRIPT_URL}?sayfa=${sayfa}`);
+    const data=await res.json();
     if(data.durum==="ok"){
         if(sayfa==="Park Faliyet") renderParkList(data.veriler);
         else if(sayfa==="Personel") renderPersonelList(data.veriler);
@@ -72,14 +72,11 @@ async function saveParkFaliyet(){
     const aciklama=document.getElementById("aciklamaPF").value;
 
     alert("E-tabloya kaydediliyor...");
-
-    // Asenkron ve küçültülmüş yükleme
     const urls = await Promise.all([
         r1?saveFileToDrive(await resizeImage(r1,800),r1.name):null,
         r2?saveFileToDrive(await resizeImage(r2,800),r2.name):null
     ]);
-
-    const satir = [tarih,aciklama,urls[0],urls[1]];
+    const satir=[tarih,aciklama,urls[0],urls[1]];
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Park Faliyet",satir})});
     alert("Kaydedildi!");
     loadData("Park Faliyet");
@@ -203,19 +200,14 @@ function loadAyarlar(content){
     <h2>Ayarlar</h2>
     <div class="settingGroup">
       <h3>Video Ayarları</h3>
-      <label for="acilisVideo">Açılış Videosu:</label>
-      <input type="file" id="acilisVideo" accept="video/*">
-      <label for="ekranKoruyucu">Ekran Koruyucu Videosu:</label>
-      <input type="file" id="ekranKoruyucu" accept="video/*">
+      <label>Açılış Videosu:</label><input type="file" id="acilisVideo" accept="video/*"><br>
+      <label>Ekran Koruyucu:</label><input type="file" id="ekranKoruyucu" accept="video/*"><br>
     </div>
     <div class="settingGroup">
-      <h3>Duvar Kağıdı Seçimi</h3>
-      <label for="parkWallpaper">Park Faliyet:</label>
-      <input type="file" id="parkWallpaper" accept="image/*">
-      <label for="personelWallpaper">Personel:</label>
-      <input type="file" id="personelWallpaper" accept="image/*">
-      <label for="evrakWallpaper">Evrak:</label>
-      <input type="file" id="evrakWallpaper" accept="image/*">
+      <h3>Duvar Kağıdı</h3>
+      <label>Park Faliyet:</label><input type="file" id="parkWallpaper" accept="image/*"><br>
+      <label>Personel:</label><input type="file" id="personelWallpaper" accept="image/*"><br>
+      <label>Evrak:</label><input type="file" id="evrakWallpaper" accept="image/*"><br>
     </div>
     <div class="settingGroup">
       <h3>PDF Oluştur</h3>
