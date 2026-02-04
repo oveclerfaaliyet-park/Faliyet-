@@ -9,38 +9,50 @@
 <body id="personel">
 
 <header>
-  <button class="geri" onclick="history.back()">← Geri</button>
+  <button class="geri"><img src="icons/back.svg" onclick="history.back()"></button>
   <h2>Personel</h2>
   <span id="saatTarih"></span>
 </header>
 
-<div class="form">
-  <input id="ad" placeholder="Ad Soyad">
-  <input id="dogum" type="date" placeholder="Doğum Tarihi">
-  <input id="isegiris" type="date" placeholder="İşe Giriş Tarihi">
-  <input id="aciklama" placeholder="Açıklama">
-</div>
-
 <div id="liste" class="liste"></div>
 
+<button class="floating-btn" onclick="acEkleModal()">
+  <img src="icons/plus.svg" alt="Ekle">
+</button>
+
+<div id="modalEkle" class="modal hidden">
+  <div class="modal-content">
+    <span class="close" onclick="kapatModal()">&times;</span>
+    <h3>Yeni Personel Ekle</h3>
+    <input type="text" id="adModal" placeholder="Ad Soyad">
+    <input type="date" id="dogumModal">
+    <input type="date" id="iseModal">
+    <input type="text" id="aciklamaModal" placeholder="Açıklama">
+    <button onclick="kaydetModal()">Kaydet</button>
+  </div>
+</div>
+
 <div class="bottom">
-  <button class="primary" onclick="kaydetPersonel()">Kaydet</button>
   <button class="danger" onclick="silKayit()">Sil</button>
 </div>
 
 <script src="app.js"></script>
 <script src="settings.js"></script>
 <script>
-applyTheme('personel'); // duvar kağıdını uygula
-saatTarihGoster();       // saat ve tarihi göster
-veriGetir('Personel');   // e-tablo verilerini listele
+applyTheme('personel');
+saatTarihGoster();
+veriGetir('Personel');
 
-function kaydetPersonel(){
-  let ad = document.getElementById("ad").value;
-  let dogum = document.getElementById("dogum").value;
-  let isegiris = document.getElementById("isegiris").value;
-  let aciklama = document.getElementById("aciklama").value;
-  kaydet([ad, dogum, isegiris, aciklama]);
+function acEkleModal(){ document.getElementById("modalEkle").classList.remove("hidden"); }
+function kapatModal(){ document.getElementById("modalEkle").classList.add("hidden"); }
+
+function kaydetModal(){
+  let ad = document.getElementById("adModal").value;
+  let dogum = document.getElementById("dogumModal").value;
+  let ise = document.getElementById("iseModal").value;
+  let aciklama = document.getElementById("aciklamaModal").value;
+  kaydet([ad,dogum,ise,aciklama]);
+  kapatModal();
 }
 </script>
 </body>
