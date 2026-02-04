@@ -1,8 +1,10 @@
-body{ font-family:sans-serif; margin:0; padding:0; background:#f0f0f0; }
-.header{ background:#1e88e5; color:white; padding:10px; display:flex; align-items:center; }
-.header button{ margin-right:10px; padding:5px 10px; }
-.menu{ display:flex; flex-direction:column; margin:20px; }
-.menu button{ margin:5px 0; padding:10px; font-size:16px; }
-.content{ margin:20px; }
-.row{ background:white; margin:5px 0; padding:10px; display:flex; justify-content:space-between; align-items:center; }
-.row button{ margin-left:5px; }
+body { font-family: Arial, sans-serif; margin:0; padding:0; }
+header { background:#2c3e50; color:#fff; padding:10px; display:flex; align-items:center; justify-content: space-between; }
+header h1 { margin:0; }
+header button { background:#2980b9; color:#fff; border:none; padding:5px 10px; margin-left:5px; cursor:pointer; }
+nav button { margin-right:5px; }
+main { padding:10px; }
+.row { display:flex; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
+.row img.thumb { width:60px; height:auto; margin-right:8px; border:1px solid #ccc; }
+.row input[type="checkbox"] { margin-right:10px; }
+button { cursor:pointer; padding:5px 10px; margin:5px 0; }
