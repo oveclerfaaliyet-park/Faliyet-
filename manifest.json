@@ -1,8 +1,8 @@
 {
   "name":"Saha Takip",
-  "short_name":"Takip",
-  "start_url":"./index.html",
+  "short_name":"Saha",
+  "start_url":"index.html",
   "display":"standalone",
-  "theme_color":"#2196f3",
-  "background_color":"#ffffff"
+  "background_color":"#ffffff",
+  "theme_color":"#2196f3"
 }
