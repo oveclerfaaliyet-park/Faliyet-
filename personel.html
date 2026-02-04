@@ -2,58 +2,26 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Personel</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Park Faaliyet</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body id="personel">
-
-<header>
-  <button class="geri"><img src="icons/back.svg" onclick="history.back()"></button>
+<body>
+<div class="header">
+  <button onclick="goBack()">← Geri</button>
   <h2>Personel</h2>
-  <span id="saatTarih"></span>
-</header>
-
-<div id="liste" class="liste"></div>
-
-<button class="floating-btn" onclick="acEkleModal()">
-  <img src="icons/plus.svg" alt="Ekle">
-</button>
-
-<div id="modalEkle" class="modal hidden">
-  <div class="modal-content">
-    <span class="close" onclick="kapatModal()">&times;</span>
-    <h3>Yeni Personel Ekle</h3>
-    <input type="text" id="adModal" placeholder="Ad Soyad">
-    <input type="date" id="dogumModal">
-    <input type="date" id="iseModal">
-    <input type="text" id="aciklamaModal" placeholder="Açıklama">
-    <button onclick="kaydetModal()">Kaydet</button>
-  </div>
 </div>
 
-<div class="bottom">
-  <button class="danger" onclick="silKayit()">Sil</button>
+<div class="content">
+  <button onclick="openAddModal('Park Faliyet')">Yeni Kayıt Ekle</button>
+  <div id="list"></div>
 </div>
 
 <script src="app.js"></script>
-<script src="settings.js"></script>
 <script>
-applyTheme('personel');
-saatTarihGoster();
-veriGetir('Personel');
-
-function acEkleModal(){ document.getElementById("modalEkle").classList.remove("hidden"); }
-function kapatModal(){ document.getElementById("modalEkle").classList.add("hidden"); }
-
-function kaydetModal(){
-  let ad = document.getElementById("adModal").value;
-  let dogum = document.getElementById("dogumModal").value;
-  let ise = document.getElementById("iseModal").value;
-  let aciklama = document.getElementById("aciklamaModal").value;
-  kaydet([ad,dogum,ise,aciklama]);
-  kapatModal();
-}
+const SAYFA = "Park Faliyet";
+loadData(SAYFA);
+function goBack(){ window.location.href='index.html'; }
 </script>
 </body>
 </html>
