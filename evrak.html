@@ -13,11 +13,16 @@
   <button onclick="window.history.back()">⬅ Geri</button>
 </header>
 <main>
-  <button onclick="openAddModal('Evrak Takip')">Yeni Kayıt Ekle</button>
+  <button onclick="toggleEvrakView()">Gelen/Giden Evrak</button>
+  <button onclick="openAddModal('Evrak Takip',1)">Yeni Kayıt Ekle</button>
   <div id="list"></div>
   <button onclick="deleteSelected('Evrak Takip')">Seçilenleri Sil</button>
   <button onclick="editSelected('Evrak Takip')">Seçilenleri Düzenle</button>
 </main>
-<script>loadData('Evrak Takip');</script>
+<script>
+let showGelen = true;
+function toggleEvrakView(){ showGelen=!showGelen; loadData('Evrak Takip'); }
+loadData('Evrak Takip');
+</script>
 </body>
 </html>
