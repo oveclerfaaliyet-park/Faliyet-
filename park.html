@@ -1,15 +1,17 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-  <meta charset="UTF-8">
-  <title>Park Faaliyet</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="style.css">
+<meta charset="UTF-8">
+<title>Park Faaliyet</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
 </head>
 <body id="park">
 
 <header>
+  <button class="geri" onclick="history.back()">← Geri</button>
   <h2>Park Faaliyet</h2>
+  <span id="saatTarih"></span>
 </header>
 
 <div class="form">
@@ -28,24 +30,19 @@
 <script src="app.js"></script>
 <script src="settings.js"></script>
 <script>
-if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js');
-}
-
 applyTheme('park');
+saatTarihGoster();
 veriGetir('Park Faliyet');
 
 function kaydetPark(){
   let tarih = document.getElementById("tarih").value;
   let aciklama = document.getElementById("aciklama").value;
   let resim = document.getElementById("resim").files[0];
-
-  let reader = new FileReader();
-  reader.onload = function(){
-    kaydet([''+tarih, ''+aciklama, reader.result]);
-  };
-  if(resim) reader.readAsDataURL(resim);
-  else kaydet([''+tarih, ''+aciklama, '']);
+  if(resim){
+    let reader = new FileReader();
+    reader.onload = ()=>kaydet([tarih, aciklama, reader.result]);
+    reader.readAsDataURL(resim);
+  } else kaydet([tarih, aciklama, ""]);
 }
 </script>
 </body>
