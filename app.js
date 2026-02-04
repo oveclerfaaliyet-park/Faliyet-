@@ -30,11 +30,39 @@ async function saveFileToDrive(base64, name){
     return data.url || null;
 }
 
-// Ayarlar sayfası
+// Ayarlar sayfası (dinamik)
 function loadAyarlar(content){
-    fetch("ayarlar.html").then(r=>r.text()).then(html=>{
-        content.innerHTML=html;
-    });
+    content.innerHTML = `
+    <h2>Ayarlar</h2>
+    <div class="settingGroup">
+      <h3>Video Ayarları</h3>
+      <label for="acilisVideo">Açılış Videosu:</label>
+      <input type="file" id="acilisVideo" accept="video/*">
+      <label for="ekranKoruyucu">Ekran Koruyucu Videosu:</label>
+      <input type="file" id="ekranKoruyucu" accept="video/*">
+    </div>
+    <div class="settingGroup">
+      <h3>Duvar Kağıdı Seçimi</h3>
+      <label for="parkWallpaper">Park Faliyet:</label>
+      <input type="file" id="parkWallpaper" accept="image/*">
+      <label for="personelWallpaper">Personel:</label>
+      <input type="file" id="personelWallpaper" accept="image/*">
+      <label for="evrakWallpaper">Evrak:</label>
+      <input type="file" id="evrakWallpaper" accept="image/*">
+    </div>
+    <div class="settingGroup">
+      <h3>PDF Oluştur</h3>
+      Başlangıç: <input type="date" id="pdfBas"><br>
+      Bitiş: <input type="date" id="pdfBit"><br>
+      Sayfa: <select id="pdfSayfa">
+        <option>Park Faliyet</option>
+        <option>Personel</option>
+        <option>Evrak</option>
+      </select><br>
+      <button onclick="createPdf()">PDF Önizleme</button>
+    </div>
+    <button onclick="saveSettings()">Ayarları Kaydet</button>
+    `;
 }
 
 // PDF oluştur
@@ -66,7 +94,7 @@ async function loadData(sayfa){
     console.log(data);
 }
 
-// Park Faliyet örnek ekleme
+// Park Faliyet ekleme
 async function saveParkFaliyet(){
     const r1=document.getElementById("resim1")?.files[0];
     const r2=document.getElementById("resim2")?.files[0];
@@ -81,7 +109,7 @@ async function saveParkFaliyet(){
     loadData("Park Faliyet");
 }
 
-// Personel örnek ekleme
+// Personel ekleme
 async function savePersonel(){
     const r=document.getElementById("resimP")?.files[0];
     const ad=document.getElementById("adSoyad").value;
@@ -107,5 +135,7 @@ async function saveEvrak(){
     const satir=[tarih,aciklama,tur,url];
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Evrak",satir})});
     alert("Kaydedildi!");
+    loadData("Evrak");
+}    alert("Kaydedildi!");
     loadData("Evrak");
 }
