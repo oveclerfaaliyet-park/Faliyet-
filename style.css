@@ -10,3 +10,6 @@ input, select, textarea, button{font-size:1rem;}
 .settingGroup input, .settingGroup select{ width:100%; padding:5px; margin-bottom:10px; }
 button{ padding:10px 15px; margin-top:5px; background:#2E8B57; color:white; border:none; border-radius:5px; cursor:pointer; }
 button:hover{ background:#246B45; }
+.listItem{display:flex;align-items:center;margin:5px 0;}
+.listItem img{margin-right:5px;}
+.listItem span{flex:1;}
