@@ -1,6 +1,19 @@
-<body>
-<h3>Ayarlar</h3>
-<input id="bg" placeholder="Duvar kağıdı URL">
-<button onclick="setAyar('bg',bg.value)">Kaydet</button>
-<script src="settings.js"></script>
-</body>
+function setAyar(k,v){ localStorage.setItem(k,v); }
+function getAyar(k){ return localStorage.getItem(k); }
+
+function uygulaTema(){
+  let key = "bg_"+document.body.id;
+  let bg = getAyar(key);
+  if(bg) document.body.style.backgroundImage="url("+bg+")";
+}
+
+function splash(){
+  let v=getAyar("splash");
+  if(v){
+    let vid=document.createElement("video");
+    vid.src=v; vid.autoplay=true;
+    document.body.innerHTML="";
+    document.body.appendChild(vid);
+    vid.onended=()=>location.href="index.html";
+  }
+}
