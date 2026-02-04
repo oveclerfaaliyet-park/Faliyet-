@@ -1,6 +1,7 @@
-<h2>Ayarlar</h2>
-<ul>
-<li>Açılış Videosu</li>
-<li>Duvar Kağıdı</li>
-<li>PDF Ayarları</li>
-</ul>
+function setAyar(k,v){ localStorage.setItem(k,v); }
+function getAyar(k){ return localStorage.getItem(k); }
+
+window.onload=function(){
+  let bg=getAyar("bg");
+  if(bg) document.body.style.background="url("+bg+")";
+}
