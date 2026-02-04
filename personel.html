@@ -8,12 +8,16 @@
 </head>
 <body id="personel">
 
-<header><h2>Personel</h2></header>
+<header>
+  <button class="geri" onclick="history.back()">← Geri</button>
+  <h2>Personel</h2>
+  <span id="saatTarih"></span>
+</header>
 
 <div class="form">
   <input id="ad" placeholder="Ad Soyad">
-  <input id="dogum" type="date">
-  <input id="isegiris" type="date">
+  <input id="dogum" type="date" placeholder="Doğum Tarihi">
+  <input id="isegiris" type="date" placeholder="İşe Giriş Tarihi">
   <input id="aciklama" placeholder="Açıklama">
 </div>
 
@@ -27,16 +31,16 @@
 <script src="app.js"></script>
 <script src="settings.js"></script>
 <script>
-applyTheme('personel');
-veriGetir('Personel');
+applyTheme('personel'); // duvar kağıdını uygula
+saatTarihGoster();       // saat ve tarihi göster
+veriGetir('Personel');   // e-tablo verilerini listele
 
 function kaydetPersonel(){
-  kaydet([
-    ad.value,
-    dogum.value,
-    isegiris.value,
-    aciklama.value
-  ]);
+  let ad = document.getElementById("ad").value;
+  let dogum = document.getElementById("dogum").value;
+  let isegiris = document.getElementById("isegiris").value;
+  let aciklama = document.getElementById("aciklama").value;
+  kaydet([ad, dogum, isegiris, aciklama]);
 }
 </script>
 </body>
