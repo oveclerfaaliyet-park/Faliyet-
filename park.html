@@ -3,25 +3,23 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PDF Oluştur</title>
+<title>Park Faliyet</title>
 <link rel="stylesheet" href="style.css">
 <script src="app.js" defer></script>
 </head>
 <body>
 <header>
-  <h1>PDF Oluştur</h1>
+  <h1>Park Faliyet</h1>
   <button onclick="window.history.back()">⬅ Geri</button>
 </header>
 <main>
-<h3>PDF</h3>
-Başlangıç <input id="bas" type="date">
-Bitiş <input id="bit" type="date">
-<select id="pdfSayfa">
-<option>Park Faliyet</option>
-<option>Personel</option>
-<option>Evrak Takip</option>
-</select>
-<button onclick="pdfOlustur()">PDF Oluştur</button>
+  <button onclick="openAddModal('Park Faliyet',2)">Yeni Kayıt Ekle</button>
+  <div id="list"></div>
+  <button onclick="deleteSelected('Park Faliyet')">Seçilenleri Sil</button>
+  <button onclick="editSelected('Park Faliyet')">Seçilenleri Düzenle</button>
 </main>
+<script>
+loadData('Park Faliyet');
+</script>
 </body>
 </html>
