@@ -2,32 +2,18 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<title>Ayarlar</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ayarlar</title>
 <link rel="stylesheet" href="style.css">
+<script src="app.js" defer></script>
 </head>
-<body id="settings">
-
+<body>
 <header>
-  <button class="geri"><img src="icons/back.svg" onclick="history.back()"></button>
-  <h2>Ayarlar</h2>
-  <span id="saatTarih"></span>
+  <h1>Ayarlar</h1>
+  <button onclick="window.history.back()">⬅ Geri</button>
 </header>
-
-<h3>Duvar Kağıdı</h3>
-Park: <input type="file" onchange="setBg(event,'park')">
-Personel: <input type="file" onchange="setBg(event,'personel')">
-Evrak: <input type="file" onchange="setBg(event,'evrak')">
-
-<h3>Açılış Videosu</h3>
-<input type="file" onchange="setVideo(event,'splash')">
-
-<h3>Ekran Koruyucu</h3>
-<input type="file" onchange="setVideo(event,'screen')">
-
-<hr>
-
-<h3>PDF</h3>
+<main>
+<h3>PDF Ayarları</h3>
 Başlangıç: <input id="bas" type="date">
 Bitiş: <input id="bit" type="date">
 <select id="pdfSayfa">
@@ -35,20 +21,18 @@ Bitiş: <input id="bit" type="date">
 <option>Personel</option>
 <option>Evrak Takip</option>
 </select>
-<button onclick="pdfOlusturPDF()">PDF Oluştur</button>
+<button onclick="pdfOlustur()">PDF Oluştur</button>
 
-<script src="settings.js"></script>
-<script src="pdf.js"></script>
-<script>
-applyTheme('settings');
-saatTarihGoster();
+<h3>Açılış Videosu</h3>
+<input type="file" id="acilisVideo" accept="video/*">
 
-function pdfOlusturPDF(){
-  let bas = document.getElementById("bas").value;
-  let bit = document.getElementById("bit").value;
-  let sayfa = document.getElementById("pdfSayfa").value;
-  pdfOlustur(sayfa, bas, bit);
-}
-</script>
+<h3>Ekran Koruyucu Videosu</h3>
+<input type="file" id="ekranVideo" accept="video/*">
+
+<h3>Duvar Kağıtları</h3>
+Park Faliyet: <input type="file" id="wallPark" accept="image/*"><br>
+Personel: <input type="file" id="wallPersonel" accept="image/*"><br>
+Evrak: <input type="file" id="wallEvrak" accept="image/*"><br>
+</main>
 </body>
 </html>
