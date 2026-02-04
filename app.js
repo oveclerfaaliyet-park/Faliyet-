@@ -11,26 +11,39 @@ function showPage(page){
     else if(page==="Ayarlar") loadAyarlar(content);
 }
 
-// Base64 çevir
-function toBase64(file){
+// --- Resim küçültme ---
+function resizeImage(file, maxWidth=800){
     return new Promise(resolve=>{
-        const reader=new FileReader();
-        reader.onload=e=>resolve(e.target.result);
+        const img = new Image();
+        const reader = new FileReader();
+        reader.onload = e=>{ img.src = e.target.result; };
+        img.onload = ()=>{
+            const scale = Math.min(maxWidth/img.width,1);
+            const canvas = document.createElement("canvas");
+            canvas.width = img.width*scale;
+            canvas.height = img.height*scale;
+            const ctx = canvas.getContext("2d");
+            ctx.drawImage(img,0,0,canvas.width,canvas.height);
+            resolve(canvas.toDataURL("image/png"));
+        };
         reader.readAsDataURL(file);
     });
 }
 
 // Drive'a kaydet
 async function saveFileToDrive(base64,name){
-    const res=await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({action:"upload",fileData:base64,fileName:name})});
-    const data=await res.json();
-    return data.url||null;
+    const res = await fetch(SCRIPT_URL,{
+        method:"POST",
+        body: JSON.stringify({action:"upload",fileData:base64,fileName:name})
+    });
+    const data = await res.json();
+    return data.url || null;
 }
 
 // Veri çekme
 async function loadData(sayfa){
-    const res=await fetch(`${SCRIPT_URL}?sayfa=${sayfa}`);
-    const data=await res.json();
+    const res = await fetch(`${SCRIPT_URL}?sayfa=${sayfa}`);
+    const data = await res.json();
     if(data.durum==="ok"){
         if(sayfa==="Park Faliyet") renderParkList(data.veriler);
         else if(sayfa==="Personel") renderPersonelList(data.veriler);
@@ -51,19 +64,27 @@ function loadParkFaliyet(content){
     `;
     loadData("Park Faliyet");
 }
+
 async function saveParkFaliyet(){
     const r1=document.getElementById("resim1")?.files[0];
     const r2=document.getElementById("resim2")?.files[0];
     const tarih=document.getElementById("tarihPF").value;
     const aciklama=document.getElementById("aciklamaPF").value;
+
     alert("E-tabloya kaydediliyor...");
-    const url1=r1?await saveFileToDrive(await toBase64(r1),r1.name):null;
-    const url2=r2?await saveFileToDrive(await toBase64(r2),r2.name):null;
-    const satir=[tarih,aciklama,url1,url2];
+
+    // Asenkron ve küçültülmüş yükleme
+    const urls = await Promise.all([
+        r1?saveFileToDrive(await resizeImage(r1,800),r1.name):null,
+        r2?saveFileToDrive(await resizeImage(r2,800),r2.name):null
+    ]);
+
+    const satir = [tarih,aciklama,urls[0],urls[1]];
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Park Faliyet",satir})});
     alert("Kaydedildi!");
     loadData("Park Faliyet");
 }
+
 function renderParkList(veriler){
     const container=document.getElementById("parkList");
     container.innerHTML="";
@@ -94,19 +115,22 @@ function loadPersonel(content){
     `;
     loadData("Personel");
 }
+
 async function savePersonel(){
     const r=document.getElementById("resimP")?.files[0];
     const ad=document.getElementById("adSoyad").value;
     const bas=document.getElementById("basT").value;
     const bit=document.getElementById("bitT").value;
     const aciklama=document.getElementById("aciklamaP").value;
+
     alert("E-tabloya kaydediliyor...");
-    const url=r?await saveFileToDrive(await toBase64(r),r.name):null;
+    const url = r?await saveFileToDrive(await resizeImage(r,800),r.name):null;
     const satir=[ad,bas,bit,aciklama,url];
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Personel",satir})});
     alert("Kaydedildi!");
     loadData("Personel");
 }
+
 function renderPersonelList(veriler){
     const container=document.getElementById("personelList");
     container.innerHTML="";
@@ -136,18 +160,21 @@ function loadEvrak(content){
     `;
     loadData("Evrak");
 }
+
 async function saveEvrak(){
     const r=document.getElementById("resimE")?.files[0];
     const tarih=document.getElementById("tarihE").value;
     const aciklama=document.getElementById("aciklamaE").value;
     const tur=document.getElementById("turE").value;
+
     alert("E-tabloya kaydediliyor...");
-    const url=r?await saveFileToDrive(await toBase64(r),r.name):null;
+    const url = r?await saveFileToDrive(await resizeImage(r,800),r.name):null;
     const satir=[tarih,aciklama,tur,url];
     await fetch(SCRIPT_URL,{method:"POST",body:JSON.stringify({sayfa:"Evrak",satir})});
     alert("Kaydedildi!");
     loadData("Evrak");
 }
+
 function renderEvrakList(veriler){
     const container=document.getElementById("evrakList");
     container.innerHTML="";
@@ -204,18 +231,20 @@ function loadAyarlar(content){
     <button onclick="saveSettings()">Ayarları Kaydet</button>
     `;
 }
+
 function saveSettings(){
     const keys=["acilisVideo","ekranKoruyucu","parkWallpaper","personelWallpaper","evrakWallpaper"];
     keys.forEach(k=>{
         const input=document.getElementById(k);
         if(input && input.files.length){
-            toBase64(input.files[0]).then(base64=>{
+            resizeImage(input.files[0],800).then(base64=>{
                 localStorage.setItem(k,base64);
                 alert(k+" kaydedildi!");
             });
         }
     });
 }
+
 function createPdf(){
     const bas=document.getElementById("pdfBas").value;
     const bit=document.getElementById("pdfBit").value;
