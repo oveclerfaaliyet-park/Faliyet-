@@ -1,19 +1,40 @@
-function setAyar(k,v){ localStorage.setItem(k,v); }
-function getAyar(k){ return localStorage.getItem(k); }
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Ayarlar</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body id="settings">
 
-function uygulaTema(){
-  let key = "bg_"+document.body.id;
-  let bg = getAyar(key);
-  if(bg) document.body.style.backgroundImage="url("+bg+")";
-}
+<h2>Ayarlar</h2>
 
-function splash(){
-  let v=getAyar("splash");
-  if(v){
-    let vid=document.createElement("video");
-    vid.src=v; vid.autoplay=true;
-    document.body.innerHTML="";
-    document.body.appendChild(vid);
-    vid.onended=()=>location.href="index.html";
-  }
-}
+<h3>Duvar Kağıdı</h3>
+<input type="file" onchange="setBg(event,'main')">
+<input type="file" onchange="setBg(event,'park')">
+<input type="file" onchange="setBg(event,'personel')">
+<input type="file" onchange="setBg(event,'evrak')">
+
+<h3>Açılış Videosu</h3>
+<input type="file" onchange="setVideo(event,'splash')">
+
+<h3>Ekran Koruyucu</h3>
+<input type="file" onchange="setVideo(event,'screen')">
+
+<hr>
+
+<h3>PDF</h3>
+Başlangıç <input id="bas" type="date">
+Bitiş <input id="bit" type="date">
+<select id="pdfSayfa">
+<option>Park Faliyet</option>
+<option>Personel</option>
+<option>Evrak Takip</option>
+</select>
+<button onclick="pdfOlustur()">PDF Oluştur</button>
+
+<script src="settings.js"></script>
+<script src="pdf.js"></script>
+</body>
+</html>
