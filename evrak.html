@@ -1,36 +1,15 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Evrak Takip</title>
-<link rel="stylesheet" href="style.css">
-<script src="app.js" defer></script>
-</head>
-<body>
-<header>
-  <h1>Evrak Takip</h1>
-  <button onclick="goBack()">Geri</button>
-</header>
-<main>
-  <select id="spEvrakType">
-    <option value="Gelen">Gelen</option>
-    <option value="Giden">Giden</option>
-  </select>
-  <input type="text" id="txtSearchEvrak" placeholder="Ara..." oninput="filterTasks('lstEvrak','txtSearchEvrak')">
-  <div id="lstEvrakGelen" class="card-container"></div>
-  <div id="lstEvrakGiden" class="card-container"></div>
+<body onload="veriGetir('Evrak Takip','liste')">
+<h2>Evrak</h2>
 
-  <!-- Popup -->
-  <div id="addEvrakPopup" class="popup hidden">
-    <label>Tarih: <input type="date" id="dpEvrakDate"></label>
-    <label>Açıklama: <textarea id="txtEvrakDesc"></textarea></label>
-    <label>Resim: <input type="file" id="imgEvrak"></label>
-    <button id="btnSaveEvrak">Kaydet</button>
-    <button onclick="closeAddEvrakPopup()">Kapat</button>
-  </div>
+<input id="tarih" type="date">
+<select id="tur">
+<option>Gelen</option>
+<option>Giden</option>
+</select>
+<textarea id="aciklama"></textarea>
+<button onclick="kaydet('Evrak Takip',[tarih.value,tur.value,aciklama.value])">Kaydet</button>
 
-  <button id="btnAddEvrak" class="floating-add">+</button>
-</main>
+<table><tbody id="liste"></tbody></table>
+<div class="fab">+</div>
+<script src="app.js"></script>
 </body>
-</html>
