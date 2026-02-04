@@ -1,24 +1,26 @@
-function setBg(e,key){
-  let r=new FileReader();
-  r.onload=()=>localStorage.setItem("bg_"+key,r.result);
-  r.readAsDataURL(e.target.files[0]);
+function applyTheme(sayfa){
+  let bg = localStorage.getItem("bg_"+sayfa);
+  if(bg) document.body.style.backgroundImage=`url(${bg})`;
 }
 
-function applyTheme(key){
-  let bg=localStorage.getItem("bg_"+key);
-  if(bg) document.body.style.backgroundImage="url("+bg+")";
+function setBg(e, sayfa){
+  let reader = new FileReader();
+  reader.onload = ()=>{ localStorage.setItem("bg_"+sayfa, reader.result); applyTheme(sayfa); };
+  reader.readAsDataURL(e.target.files[0]);
 }
 
-function setVideo(e,key){
-  let r=new FileReader();
-  r.onload=()=>localStorage.setItem(key,r.result);
-  r.readAsDataURL(e.target.files[0]);
+function setVideo(e,type){
+  let reader = new FileReader();
+  reader.onload = ()=>localStorage.setItem(type+"_video", reader.result);
+  reader.readAsDataURL(e.target.files[0]);
 }
 
 function playSplash(){
-  let v=localStorage.getItem("splash");
-  if(!v) return;
-  splashVideo.src=v;
-  splash.classList.remove("hidden");
-  splashVideo.onended=()=>splash.classList.add("hidden");
+  let video = localStorage.getItem("splash_video");
+  if(video){ let v=document.getElementById("splashVideo"); v.src=video; document.getElementById("splash").classList.remove("hidden"); }
+}
+
+function saatTarihGoster(){
+  let elem = document.getElementById("saatTarih");
+  setInterval(()=>{ if(elem) elem.textContent=new Date().toLocaleString(); },1000);
 }
