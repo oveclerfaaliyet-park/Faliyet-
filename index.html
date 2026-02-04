@@ -1,13 +1,40 @@
-<!DOCTYPE html><html>
+<!DOCTYPE html>
+<html lang="tr">
 <head>
-<link rel="manifest" href="manifest.json">
-<link rel="stylesheet" href="style.css">
-<script src="app.js"></script>
+  <meta charset="UTF-8">
+  <title>Saha Takip</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body onload="saatBaslat()">
-<header><h2>Saha Takip</h2><div id="saat"></div></header>
-<a href="park.html">Park Faaliyet</a>
-<a href="personel.html">Personel</a>
-<a href="evrak.html">Evrak Takip</a>
-<a href="settings.html">Ayarlar</a>
-</body></html>
+<body id="main">
+
+<div id="splash" class="splash hidden">
+  <video id="splashVideo" autoplay muted></video>
+</div>
+
+<header>
+  <h1>Saha Takip</h1>
+</header>
+
+<div class="menu">
+  <button onclick="go('park.html')">Park Faaliyet</button>
+  <button onclick="go('personel.html')">Personel</button>
+  <button onclick="go('evrak.html')">Evrak Takip</button>
+  <button onclick="go('settings.html')">Ayarlar</button>
+</div>
+
+<script src="app.js"></script>
+<script src="settings.js"></script>
+<script>
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js');
+}
+
+applyTheme('main');
+playSplash();
+
+function go(p){ location.href = p; }
+</script>
+</body>
+</html>
