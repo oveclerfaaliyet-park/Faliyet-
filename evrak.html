@@ -1,12 +1,41 @@
-<body onload="veriGetir('Evrak Takip','liste')">
-<h3>Evrak</h3>
-<input id="tarih" type="date">
-<select id="tur"><option>Gelen</option><option>Giden</option></select>
-<textarea id="aciklama"></textarea>
-<button onclick="kaydet('Evrak Takip',[tarih.value,tur.value,aciklama.value])">Kaydet</button>
-<table><tbody id="liste"></tbody></table>
-<button onclick="pdfYap('liste')">PDF</button>
-<div class="fab">+</div>
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Evrak Takip</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="style.css">
+</head>
+<body id="evrak">
+
+<header><h2>Evrak Takip</h2></header>
+
+<div class="form">
+  <input id="tarih" type="date">
+  <input id="aciklama" placeholder="Açıklama">
+  <input id="resim" type="file" accept="image/*">
+</div>
+
+<div id="liste" class="liste"></div>
+
+<div class="bottom">
+  <button class="primary" onclick="kaydetEvrak()">Kaydet</button>
+  <button class="danger" onclick="silKayit()">Sil</button>
+</div>
+
 <script src="app.js"></script>
-<script src="pdf.js"></script>
+<script src="settings.js"></script>
+<script>
+applyTheme('evrak');
+veriGetir('Evrak Takip');
+
+function kaydetEvrak(){
+  let reader = new FileReader();
+  let file = resim.files[0];
+  reader.onload = ()=> kaydet([tarih.value, aciklama.value, reader.result]);
+  if(file) reader.readAsDataURL(file);
+  else kaydet([tarih.value, aciklama.value, ""]);
+}
+</script>
 </body>
+</html>
