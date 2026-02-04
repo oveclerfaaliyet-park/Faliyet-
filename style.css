@@ -1,10 +1,82 @@
-body { font-family: Arial, sans-serif; margin:0; padding:0; }
-header { background:#2c3e50; color:#fff; padding:10px; display:flex; align-items:center; justify-content: space-between; }
+/* ------------------ GENEL ------------------ */
+body {
+    font-family: Arial, sans-serif;
+    margin:0; padding:0;
+    background-color: #f5f5f5;
+}
+header {
+    background-color: #0078d7;
+    color: white;
+    padding: 10px;
+    display:flex;
+    justify-content: space-between;
+    align-items: center;
+}
 header h1 { margin:0; }
-header button { background:#2980b9; color:#fff; border:none; padding:5px 10px; margin-left:5px; cursor:pointer; }
-nav button { margin-right:5px; }
+header button { background:none; border:none; color:white; font-size:16px; cursor:pointer; }
 main { padding:10px; }
-.row { display:flex; align-items:center; margin-bottom:8px; flex-wrap:wrap; }
-.row img.thumb { width:60px; height:auto; margin-right:8px; border:1px solid #ccc; }
-.row input[type="checkbox"] { margin-right:10px; }
-button { cursor:pointer; padding:5px 10px; margin:5px 0; }
+button { padding:8px 12px; margin:5px; cursor:pointer; }
+input[type=date], input[type=text], select { padding:5px; margin:5px 0; }
+
+/* ------------------ LİSTE & RESİM ------------------ */
+.listItem {
+    display:flex;
+    align-items:center;
+    background:white;
+    margin:5px 0;
+    padding:5px;
+    border-radius:5px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.2);
+}
+.listItem img {
+    border-radius:3px;
+    margin-right:10px;
+}
+.listItem .info {
+    flex:1;
+}
+
+/* ------------------ MODAL ------------------ */
+.modal {
+    position:fixed;
+    top:0; left:0;
+    width:100%; height:100%;
+    background: rgba(0,0,0,0.7);
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    z-index:1000;
+}
+.modalContent {
+    background:white;
+    padding:20px;
+    border-radius:5px;
+    max-width:90%;
+    max-height:90%;
+    overflow:auto;
+    text-align:center;
+}
+.modalContent img { max-width:100%; margin-bottom:10px; }
+.modalContent .close {
+    position:absolute;
+    top:5px; right:10px;
+    font-size:24px;
+    font-weight:bold;
+    cursor:pointer;
+}
+
+/* ------------------ AYARLAR ------------------ */
+main h3 { margin-top:20px; }
+main input, main select { display:block; width:90%; max-width:300px; margin-bottom:10px; }
+
+/* ------------------ PDF ÖNİZLEME ------------------ */
+.pdfContainer {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+}
+.pdfContainer img {
+    width:100%;
+    height:auto;
+    border-radius:3px;
+}
