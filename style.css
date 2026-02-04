@@ -1,5 +1,7 @@
-body { font-family: Arial; margin: 0; padding: 10px; }
+body { font-family: Arial; margin:0; padding:10px; }
 header { background:#2196f3;color:white;padding:10px;text-align:center; }
+
+a { display:block;padding:10px;border-bottom:1px solid #ddd;text-decoration:none;color:black; }
 
 .fab {
   position: fixed;
@@ -15,5 +17,13 @@ header { background:#2196f3;color:white;padding:10px;text-align:center; }
   line-height: 70px;
 }
 
-table { width:100%; border-collapse: collapse; }
+input, textarea, select {
+  width:100%;
+  margin:5px 0;
+  padding:5px;
+}
+
+button { padding:10px;width:100%;background:#2196f3;color:white;border:none; }
+
+table { width:100%; border-collapse: collapse;margin-top:10px; }
 td, th { border:1px solid #ccc; padding:5px; }
