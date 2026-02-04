@@ -1,86 +1,153 @@
-const BASE_URL = "https://script.google.com/macros/s/AKfycbw7AXQgZew2qj_q_4n78kUpdmcWWsTGuQd0UOovYZfpzKcPyicxicShDXX7endBgx7lmw/exec";
+const SHEET_ID = "1fgUyLnzVGtdXcB3jUwJjfm5Vhblauz6civEMouYLXYc";
+const FOLDER_ID = "1xmTD_y26fjXhIJiXbDvh5C9ozvDPDPPD"; // Saha_resim klasörü
 
+// ------------------ VERİ ÇEKME ------------------
 async function loadData(sayfa){
-  const res = await fetch(`${BASE_URL}?sayfa=${encodeURIComponent(sayfa)}`);
-  const data = await res.json();
-  const listDiv = document.getElementById('list');
-  listDiv.innerHTML = '';
-  if(data.durum !== 'ok') { listDiv.innerHTML = data.mesaj; return; }
-  data.veriler.forEach((row, i)=>{
-    const div = document.createElement('div');
-    div.className = 'row';
-    let html = `<input type="checkbox" class="rowCheck" data-index="${i}"> `;
-    html += row.map(col=>{
-      if(col && col.startsWith("https://drive.google.com")) return `<img src="${col}" class="thumb">`;
-      return col;
-    }).join(' | ');
-    div.innerHTML = html;
-    listDiv.appendChild(div);
-  });
-}
-
-async function deleteSelected(sayfa){
-  const checkboxes = document.querySelectorAll('.rowCheck:checked');
-  for(let cb of checkboxes){
-    const index = parseInt(cb.dataset.index);
-    await fetch(BASE_URL, { method:'POST', body: JSON.stringify({ action:'sil', index, sayfa, satir:[] }) });
-  }
-  loadData(sayfa);
-}
-
-async function editSelected(sayfa){
-  const checkboxes = document.querySelectorAll('.rowCheck:checked');
-  for(let cb of checkboxes){
-    const index = parseInt(cb.dataset.index);
-    const text = prompt('Yeni değerleri | ile ayırın:');
-    if(!text) continue;
-    const satir = text.split('|').map(s=>s.trim());
-    await fetch(BASE_URL,{ method:'POST', body: JSON.stringify({ action:'duzenle', index, sayfa, satir }) });
-  }
-  loadData(sayfa);
-}
-
-async function openAddModal(sayfa){
-  const text = prompt('Yeni değerleri | ile ayırın (resim için seçiniz):');
-  if(!text) return;
-  let satir = text.split('|').map(s=>s.trim());
-  const fileInput = document.createElement('input');
-  fileInput.type='file';
-  fileInput.accept='image/*';
-  fileInput.onchange=async ()=>{
-    if(fileInput.files.length){
-      const resized = await resizeImage(fileInput.files[0]);
-      const fileName = fileInput.files[0].name;
-      await fetch(BASE_URL,{ method:'POST', body: JSON.stringify({ action:'ekle', sayfa, satir, fileData:resized, fileName }) });
-      loadData(sayfa);
-    } else {
-      await fetch(BASE_URL,{ method:'POST', body: JSON.stringify({ action:'ekle', sayfa, satir }) });
-      loadData(sayfa);
+    const listEl = document.getElementById("list");
+    if(!listEl) return;
+    listEl.innerHTML = "Yükleniyor...";
+    try{
+        const res = await fetch(`${SCRIPT_URL}?sayfa=${encodeURIComponent(sayfa)}`);
+        const data = await res.json();
+        if(data.durum!="ok") throw data.mesaj;
+        renderList(data.veriler,sayfa);
+    }catch(err){
+        listEl.innerHTML = "Hata: "+err;
     }
-  };
-  fileInput.click();
 }
 
-function resizeImage(file, maxWidth=800){
-  return new Promise((resolve)=>{
-    const reader = new FileReader();
-    reader.onload = e=>{
-      const img = new Image();
-      img.onload=()=>{
-        const canvas = document.createElement('canvas');
-        const ratio = img.width / img.height;
-        canvas.width = Math.min(maxWidth, img.width);
-        canvas.height = canvas.width / ratio;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img,0,0,canvas.width,canvas.height);
-        resolve(canvas.toDataURL("image/png",0.7));
-      };
-      img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-  });
+// ------------------ LİSTELEME ------------------
+function renderList(veriler,sayfa){
+    const listEl = document.getElementById("list");
+    listEl.innerHTML = "";
+    veriler.forEach((row,index)=>{
+        const div = document.createElement("div");
+        div.className = "listItem";
+
+        // Park/Evrak resim 80x80
+        if(row[0]){ 
+            const img = document.createElement("img");
+            img.src = row[0];
+            img.width=80; img.height=80;
+            img.onclick=()=>openModal(row);
+            div.appendChild(img);
+        }
+
+        const info = document.createElement("div");
+        info.className = "info";
+        info.innerHTML = `<b>Tarih:</b> ${row[1] || ""} <br> <b>Açıklama:</b> ${row[2] || ""}`;
+        div.appendChild(info);
+
+        const chk = document.createElement("input");
+        chk.type="checkbox"; chk.dataset.index=index;
+        div.appendChild(chk);
+
+        listEl.appendChild(div);
+    });
 }
 
-async function pdfOlustur(){
-  alert('PDF oluşturma işlevi buraya bağlanacak.');
+// ------------------ MODAL ------------------
+function openModal(row){
+    const modal = document.createElement("div");
+    modal.className="modal";
+    modal.innerHTML=`<div class="modalContent">
+        <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+        <img src="${row[0]}" style="max-width:90%; display:block; margin:auto">
+        <p><b>Tarih:</b> ${row[1]}</p>
+        <p><b>Açıklama:</b> ${row[2]}</p>
+    </div>`;
+    document.body.appendChild(modal);
+}
+
+// ------------------ EKLEME MODAL ------------------
+function openAddModal(sayfa,maxImg){
+    const modal = document.createElement("div");
+    modal.className="modal";
+    modal.innerHTML=`<div class="modalContent">
+        <span class="close" onclick="this.parentElement.parentElement.remove()">&times;</span>
+        <h3>Yeni Kayıt Ekle - ${sayfa}</h3>
+        <input type="file" id="resimInput" ${maxImg>1?'multiple':''} accept="image/*"><br>
+        Tarih: <input type="date" id="tarihInput"><br>
+        Açıklama: <input type="text" id="aciklamaInput"><br>
+        <button onclick="saveRecord('${sayfa}',${maxImg})">Kaydet</button>
+    </div>`;
+    document.body.appendChild(modal);
+}
+
+// ------------------ KAYDETME ------------------
+async function saveRecord(sayfa,maxImg){
+    const input = document.getElementById("resimInput");
+    const tarih = document.getElementById("tarihInput").value;
+    const aciklama = document.getElementById("aciklamaInput").value;
+    if(!input.files.length) return alert("Resim seçin!");
+
+    for(let i=0;i<input.files.length;i++){
+        const file = input.files[i];
+        const base64 = await toBase64(file);
+        const url = await saveFileToDrive(base64,file.name);
+        const satir = [url,tarih,aciklama];
+        await fetch(SCRIPT_URL,{
+            method:"POST",
+            body: JSON.stringify({sayfa,satir})
+        });
+    }
+    document.querySelector(".modal").remove();
+    loadData(sayfa);
+}
+
+// ------------------ BASE64 ------------------
+function toBase64(file){
+    return new Promise((res,rej)=>{
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload=()=>res(reader.result);
+        reader.onerror=err=>rej(err);
+    });
+}
+
+// ------------------ DRIVE KAYIT ------------------
+async function saveFileToDrive(base64,name){
+    const res = await fetch(`${SCRIPT_URL}?action=save`,{
+        method:"POST",
+        body: JSON.stringify({fileData:base64,fileName:name})
+    });
+    const data = await res.json();
+    return data.url;
+}
+
+// ------------------ SEÇİLENİ SİL ------------------
+async function deleteSelected(sayfa){
+    const listEl = document.getElementById("list");
+    const selected = Array.from(listEl.querySelectorAll("input[type=checkbox]:checked")).map(i=>parseInt(i.dataset.index));
+    for(let idx of selected){
+        await fetch(SCRIPT_URL,{
+            method:"POST",
+            body: JSON.stringify({sayfa,action:"sil",index:idx})
+        });
+    }
+    loadData(sayfa);
+}
+
+// ------------------ SEÇİLENİ DÜZENLE ------------------
+async function editSelected(sayfa){
+    const listEl = document.getElementById("list");
+    const selected = Array.from(listEl.querySelectorAll("input[type=checkbox]:checked")).map(i=>parseInt(i.dataset.index));
+    if(selected.length!=1) return alert("Lütfen tek kayıt seçin.");
+    const idx = selected[0];
+    // TODO: Modal ile düzenleme açılacak, aynı ekleme mantığı kullanılacak
+    alert("Düzenleme modalı burada açılacak");
+}
+
+// ------------------ PDF OLUŞTUR ------------------
+function pdfOlustur(){
+    const bas = document.getElementById("bas").value;
+    const bit = document.getElementById("bit").value;
+    const sayfa = document.getElementById("pdfSayfa").value;
+    window.open(`pdf.html?bas=${bas}&bit=${bit}&sayfa=${sayfa}`,"_blank");
+}
+
+// ------------------ AYARLAR ------------------
+// Açılış video, ekran koruyucu ve duvar kağıtlarını kaydetmek için
+function saveSettings(){
+    // TODO: localStorage veya e-tablo kaydı
 }
