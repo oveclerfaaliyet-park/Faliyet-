@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ANFA Vardiya Takip</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<style>
+:root{
+--bg-primary:#ffffff;
+--bg-secondary:#ffffff;
+--bg-tertiary:#e5e7eb;
+--color-primary:#10b981;
+--color-success:#10b981;
+--color-warning:#fbbf24;
+--color-text:#0f172a;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',system-ui,sans-serif}
+body{background:#ffffff;color:var(--color-text);min-height:100vh;padding:15px;max-width:500px;margin:auto}
+
+.header{
+background:#064e3b;
+padding:20px;border-radius:20px;text-align:center;margin-bottom:20px;
+color:white;
+}
+.logo-container{display:flex;justify-content:center;gap:12px;margin-bottom:10px}
+.logo-icon{font-size:2.2rem;color:#a7f3d0}
+.logo-text{font-size:1.8rem;font-weight:800;color:#a7f3d0}
+#time{font-size:2.7rem;color:#a7f3d0;margin:5px 0}
+#date{font-size:.95rem}
+#todayShift{margin-top:8px;font-size:.9rem;color:#fbbf24}
+
+.section{background:#f9fafb;padding:20px;border-radius:20px;margin-bottom:20px}
+.section-title{color:#064e3b;font-size:1.3rem;margin-bottom:15px}
+
+.vardiya-buttons{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+
+/* SADECE BURASI DEĞİŞTİ */
+.vardiya-btn{
+background:#ffffff;
+border:3px solid #94a3b8;
+border-radius:15px;
+padding:15px;
+color:#0f172a;
+cursor:pointer;
+font-weight:600;
+box-shadow:0 2px 6px rgba(0,0,0,.15);
+}
+
+.vardiya-btn.active{
+border-color:#10b981;
+background:rgba(16,185,129,.2);
+box-shadow:0 0 10px rgba(16,185,129,.6);
+}
+/* --------------------- */
+
+.weekdays{
+display:grid;grid-template-columns:repeat(7,1fr);
+font-size:.75rem;text-align:center;margin-bottom:6px;color:#64748b
+}
+
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+.day{
+background:#e5e7eb;
+border-radius:10px;
+padding:8px;
+font-size:.85rem;
+text-align:center;
+position:relative
+}
+.work-day{background:rgba(16,185,129,.4)}
+.work-night{background:rgba(56,189,248,.4)}
+.off{background:rgba(148,163,184,.4)}
+.holiday{outline:2px solid #fbbf24}
+.today{outline:2px solid #10b981;box-shadow:0 0 10px #10b981}
+
+.summary{display:flex;justify-content:space-between;margin-top:15px}
+.summary-value{font-size:1.6rem;font-weight:800}
+
+.holiday-box{
+display:none;
+margin-top:15px;
+background:#ecfeff;
+border-left:4px solid #fbbf24;
+padding:10px;
+border-radius:10px;
+font-size:.9rem
+}
+</style>
+</head>
+
+<body>
+
+<div class="header">
+<div class="logo-container">
+<div class="logo-icon"><i class="fas fa-shield-alt"></i></div>
+<div class="logo-text"></div>
+</div>
+<div id="date"></div>
+<div id="time"></div>
+<div id="todayShift"></div>
+</div>
+
+<div class="section">
+<div class="section-title">Vardiya Seçimi</div>
+<div class="vardiya-buttons">
+<button class="vardiya-btn" data-v="1">1. Vardiya</button>
+<button class="vardiya-btn" data-v="2">2. Vardiya</button>
+<button class="vardiya-btn" data-v="3">3. Vardiya</button>
+<button class="vardiya-btn" data-v="4">4. Vardiya</button>
+</div>
+</div>
+
+<div class="section">
+<div class="section-title" style="display:flex;justify-content:space-between;align-items:center">
+<button onclick="prevMonth()">◀</button>
+<span id="monthTitle"></span>
+<button onclick="nextMonth()">▶</button>
+</div>
+
+<div class="weekdays">
+<div>Pzt</div><div>Sal</div><div>Çar</div><div>Per</div><div>Cum</div><div>Cts</div><div>Paz</div>
+</div>
+
+<div class="calendar-grid" id="calendar"></div>
+
+<div class="summary">
+<div><div class="summary-value" id="dayCount">0</div>Gündüz</div>
+<div><div class="summary-value" id="nightCount">0</div>Gece</div>
+<div><div class="summary-value" id="offCount">0</div>İzin</div>
+</div>
+
+<div class="holiday-box" id="holidayInfo"></div>
+</div>
+
+<script>
+const BASLANGIC=new Date(Date.UTC(2026,0,1))
+let secilen=localStorage.getItem('secVardiya') || 1
+let currentYear=new Date().getFullYear(),currentMonth=new Date().getMonth()
+
+// 🎯 Türkiye 2026 Tatiller ve Özel Günler
+const tatiller = {
+"1-1": "🎉 Yılbaşı",
+"2-3": "🌙 Berat Kandili",
+"3-15": "🌙 Miraç Kandili",
+"3-19": "🌙 Ramazan Bayramı Arefesi",
+"3-20": "🌙 Ramazan Bayramı 1. Gün",
+"3-21": "🌙 Ramazan Bayramı 2. Gün",
+"3-22": "🌙 Ramazan Bayramı 3. Gün",
+"4-23": "🇹🇷 Ulusal Egemenlik ve Çocuk Bayramı",
+"5-1": "👷 Emek ve Dayanışma Günü",
+"5-19": "🇹🇷 Atatürk’ü Anma, Gençlik ve Spor Bayramı",
+"5-26": "🌙 Kurban Bayramı Arefesi",
+"5-27": "🌙 Kurban Bayramı 1. Gün",
+"5-28": "🌙 Kurban Bayramı 2. Gün",
+"5-29": "🌙 Kurban Bayramı 3. Gün",
+"5-30": "🌙 Kurban Bayramı 4. Gün",
+"6-16": "🌙 Hicri Yılbaşı",
+"6-25": "🌙 Aşure Günü",
+"7-15": "🇹🇷 Demokrasi ve Millî Birlik Günü",
+"8-24": "🌙 Mevlid Kandili",
+"8-30": "🇹🇷 Zafer Bayramı",
+"10-28": "🇹🇷 Cumhuriyet Bayramı Arifesi",
+"10-29": "🇹🇷 Cumhuriyet Bayramı",
+"11-10": "⭐️ Atatürk’ü Anma Günü",
+"12-10": "🌙 Regaib Kandili",
+"12-21": "🌙 Üç Aylar Başlangıcı",
+"12-28": "⭐️ Yılbaşı Arifesi"
+}
+
+function vardiya(t){
+const gunFarki=Math.floor(
+(Date.UTC(t.getFullYear(),t.getMonth(),t.getDate()) -
+ Date.UTC(2026,0,1)) / 86400000
+) % 4
+
+const duzen=[
+['gece','izin','izin','gunduz'],
+['izin','izin','gunduz','gece'],
+['izin','gunduz','gece','izin'],
+['gunduz','gece','izin','izin']
+]
+
+return duzen[(gunFarki+4)%4]
+}
+
+function todayInfo(){
+const today=new Date()
+const v=vardiya(today)
+let g=[],n=[]
+v.forEach((x,i)=>{
+if(x==='gunduz') g.push((i+1)+'. Vardiya')
+if(x==='gece') n.push((i+1)+'. Vardiya')
+})
+todayShift.innerText=`Bugün → Gündüz: ${g.join(', ')||'-'} | Gece: ${n.join(', ')||'-'}`
+}
+
+function draw(){
+calendar.innerHTML=''
+holidayInfo.style.display='none'
+holidayInfo.innerHTML=''
+
+let g=0,n=0,o=0
+const today=new Date()
+const firstDay=(new Date(currentYear,currentMonth,1).getDay()+6)%7
+const days=new Date(currentYear,currentMonth+1,0).getDate()
+
+monthTitle.innerText=new Date(currentYear,currentMonth)
+.toLocaleDateString('tr-TR',{month:'long',year:'numeric'})
+
+for(let i=0;i<firstDay;i++){
+calendar.appendChild(document.createElement('div'))
+}
+
+for(let i=1;i<=days;i++){
+const date=new Date(currentYear,currentMonth,i)
+const v=vardiya(date)[secilen-1]
+const d=document.createElement('div')
+let key=(currentMonth+1)+'-'+i
+
+d.className='day '+(v==='gunduz'?'work-day':v==='gece'?'work-night':'off')
+
+if(date.toDateString()===today.toDateString()){
+d.classList.add('today')
+}
+
+if(tatiller[key]){
+d.classList.add('holiday')
+holidayInfo.style.display='block'
+holidayInfo.innerHTML+=tatiller[key]+'<br>'
+}
+
+d.innerText=i
+calendar.appendChild(d)
+
+v==='gunduz'?g++:v==='gece'?n++:o++
+}
+
+dayCount.innerText=g
+nightCount.innerText=n
+offCount.innerText=o
+}
+
+document.querySelectorAll('.vardiya-btn').forEach(b=>{
+if(b.dataset.v==secilen) b.classList.add('active')
+b.onclick=()=>{
+document.querySelectorAll('.vardiya-btn').forEach(x=>x.classList.remove('active'))
+b.classList.add('active')
+secilen=b.dataset.v
+localStorage.setItem('secVardiya',secilen)
+draw()
+}
+})
+
+function nextMonth(){currentMonth++;if(currentMonth>11){currentMonth=0;currentYear++}draw()}
+function prevMonth(){currentMonth--;if(currentMonth<0){currentMonth=11;currentYear--}draw()}
+
+function tick(){
+const n=new Date()
+time.innerText=n.toLocaleTimeString('tr-TR')
+date.innerText=n.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'})
+}
+
+setInterval(tick,1000)
+tick();draw();todayInfo()
+</script>
+
+</body>
+</html>

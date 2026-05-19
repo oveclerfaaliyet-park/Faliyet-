@@ -1,23 +1,202 @@
 <!DOCTYPE html>
 <html lang="tr">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Saha Takip</title>
-<link rel="stylesheet" href="style.css">
-<script src="app.js" defer></script>
+    <meta charset="UTF-8">
+    <title>ANFA Takip</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignal.js" async=""></script>
+    <script>
+      window.OneSignalDeferred = window.OneSignalDeferred || [];
+      OneSignalDeferred.push(async function(OneSignal) {
+        await OneSignal.init({
+          appId: "YOUR_ONESIGNAL_APP_ID_HERE",
+          safari_web_id: "YOUR_SAFARI_WEB_ID_HERE",
+          notifyButton: {
+            enable: true,
+          },
+        });
+      });
+    </script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        body { margin: 0; font-family: Arial, sans-serif; background: #f2f2f2; overflow-x: hidden; }
+        #header { background: #1b5e20; color: white; height: 90px; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; box-sizing: border-box; }
+        #appTitle { text-align: center; font-family: 'Comic Sans MS', cursive; font-size: 32px; font-weight: bold; color: white; flex: 1; line-height: 1.1; }
+        #appDateTime { text-align: center; font-family: Arial; font-size: 16px; color: #e0ffe0; margin-top: 6px; letter-spacing: 1px; }
+        #menuBtn { font-size: 24px; cursor: pointer; width: 40px; }
+        #backFloat { position: fixed; top: 10px; left: 15px; font-size: 30px; font-weight: bold; background: #1b5e20; color: white; padding: 10px 14px; border-radius: 10px; display: none; z-index: 2000; cursor: pointer; }
+        #menu { position: fixed; top: 0; left: -240px; width: 240px; height: 100%; background: #a5d6a7; color: #1b5e20; transition: .3s; z-index: 1000; padding-top: 90px; overflow-y: auto; }
+        #menu a { display: block; padding: 14px; color: #1b5e20; text-decoration: none; border-bottom: 1px solid #7cbf8a; cursor: pointer; font-weight: bold; }
+        #menu a i { margin-right: 10px; }
+        #menu a:hover { background: #81c784; }
+        #menuFooter { text-align: center; font-size: 15px; margin-top: 20px; padding-bottom: 20px; font-weight: bold; line-height: 1.6; }
+        #tasksBox { padding: 15px; }
+        h3 { text-align: center; margin-top: 5px; color: #1b5e20; }
+        .form-box { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 15px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .form-row { display: flex; gap: 8px; margin-top: 8px; }
+        .form-row input { flex: 1; }
+        input, button { padding: 10px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; }
+        button { background: #1b5e20; color: white; border: none; font-weight: bold; cursor: pointer; }
+        table { width: 100%; background: white; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: center; font-size: 14px; word-wrap: break-word; }
+        th { background: #e8f5e9; }
+        .done { background: #ffcccc; text-decoration: line-through; }
+        .checkBox { width: 28px; height: 28px; border: 2px solid #555; display: flex; align-items: center; justify-content: center; cursor: pointer; margin: auto; border-radius: 4px; }
+        .checkBox i { display: none; color: #1b5e20; }
+        .checked i { display: block; }
+        #content { display: none; height: calc(100vh - 90px); }
+        iframe { width: 100%; height: 100%; border: none; }
+        #screenSaver { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 9999; background: black; }
+        #screenSaver img { width: 100%; height: 100%; object-fit: cover; }
+        .handwriting { font-family: 'Brush Script MT', 'Comic Sans MS', cursive; font-style: italic; }
+    </style>
 </head>
+
 <body>
-<h1>Saha Takip Uygulaması</h1>
-<nav>
-  <button onclick="showPage('Park Faliyet')">Park Faliyet</button>
-  <button onclick="showPage('Personel')">Personel</button>
-  <button onclick="showPage('Evrak')">Evrak</button>
-  <button onclick="showPage('Ayarlar')">Ayarlar</button>
-</nav>
-<div id="content"></div>
+
+    <div id="screenSaver">
+        <img src="file:///android_asset/anfa.gif">
+    </div>
+
+    <div id="backFloat" onclick="goHome()">←</div>
+
+    <div id="header">
+        <div id="menuBtn" onclick="toggleMenu()">☰</div>
+        <div id="appTitle">
+            ANFA TAKİP
+            <div id="appDateTime"></div>
+        </div>
+        <div style="width:40px"></div>
+    </div>
+
+    <div id="menu">
+        <a onclick="loadPage('filist.html')"><i class="fas fa-address-book"></i> 📞 Personel Rehberi</a>
+        <a onclick="loadPage('olay_bildir.html')"><i class="fas fa-edit"></i> 📝 Olay Bildir</a>
+        <a onclick="loadPage('park_doluluk.html')"><i class="fas fa-car"></i> 🚗 Park Doluluk</a>
+        <a onclick="loadPage('vardiya_takip.html')"><i class="fas fa-calendar-alt"></i> 📅 Vardiya Takip</a>
+        <a onclick="loadPage('personel_takip.html')"><i class="fas fa-user-check"></i> 👤 Personel Takip</a>
+        <a onclick="loadPage('templates.html')"><i class="fas fa-folder-open"></i> 📂 Hazır Şablonlar</a>
+
+        <div id="menuFooter">
+            <div>Bu uygulama<br>sizin için<br><b class="handwriting">Yasin Demirgan</b><br>tarafından<br>geliştirilmiştir.</div>
+            <div style="margin-top:12px;font-size:14px;">📞 <a href="tel:+905375120777" style="color:#1b5e20;text-decoration:none;">+905375120777</a></div>
+            <div style="margin-top:4px;font-size:14px;">✉️ <a href="mailto:yasindemirkan83@gmail.com" style="color:#1b5e20;text-decoration:none;">yasindemirkan83@gmail.com</a></div>
+            <div style="margin-top:8px;">🌐 <a href="https://nsosyal.com/yasindemirgan" target="_blank" style="color:#1b5e20;text-decoration:none;">Nsosyal Profil</a></div>
+        </div>
+    </div>
+
+    <div id="tasksBox">
+        <h3>📋 GÖREV LİSTESİ / NOTLAR</h3>
+        <div class="form-box">
+            <input id="taskInput" type="text" placeholder="Görev / Not" style="width:100%; font-size:16px; font-weight:bold">
+            <div class="form-row"><input id="startDateTime" type="date"><input id="startTime" type="time"></div>
+            <div class="form-row"><input id="endDateTime" type="date"><input id="endTime" type="time"></div>
+            <button style="width:100%; margin-top:10px" onclick="addTask()">Ekle</button>
+        </div>
+        <table>
+            <thead><tr><th>Görev</th><th>Başlangıç</th><th>Bitiş</th><th>İşlem</th></tr></thead>
+            <tbody id="taskList"></tbody>
+        </table>
+    </div>
+
+    <div id="content"><iframe id="frame"></iframe></div>
+
 <script>
-document.addEventListener("DOMContentLoaded",()=>{ showPage('Park Faliyet'); });
+let tasks = JSON.parse(localStorage.getItem("tasks") || "[]");
+function saveTasks() { localStorage.setItem("tasks", JSON.stringify(tasks)); }
+function formatDate(d, t) { if (!d) return ""; return new Date(d).toLocaleDateString("tr-TR") + " | " + (t || ""); }
+function renderTasks() {
+    const taskList = document.getElementById("taskList");
+    taskList.innerHTML = "";
+    tasks.forEach((t, i) => {
+        const tr = document.createElement("tr");
+        if (t.done) tr.classList.add("done");
+        tr.innerHTML = `<td>${t.text}</td><td>${formatDate(t.startDate, t.startTime)}</td><td>${formatDate(t.endDate, t.endTime)}</td>
+        <td><div style="display:flex;justify-content:center;gap:6px">
+        <div class="checkBox ${t.done ? 'checked' : ''}" onclick="toggleDone(${i})"><i class="fas fa-check"></i></div>
+        <button onclick="deleteTask(${i})">🗑</button></div></td>`;
+        taskList.appendChild(tr);
+    });
+}
+function addTask() {
+    const taskInput = document.getElementById("taskInput");
+    if (!taskInput.value) return;
+    tasks.push({
+        text: taskInput.value,
+        startDate: document.getElementById("startDateTime").value,
+        startTime: document.getElementById("startTime").value,
+        endDate: document.getElementById("endDateTime").value,
+        endTime: document.getElementById("endTime").value,
+        done: false
+    });
+    taskInput.value = ""; saveTasks(); renderTasks();
+}
+function toggleDone(i) { tasks[i].done = !tasks[i].done; saveTasks(); renderTasks(); }
+function deleteTask(i) { if (confirm("Silmek istiyor musun?")) { tasks.splice(i, 1); saveTasks(); renderTasks(); } }
+renderTasks();
+
+function updateCenterTime() {
+    const n = new Date();
+    document.getElementById("appDateTime").innerText =
+        n.toLocaleDateString("tr-TR") + " | " +
+        n.toLocaleTimeString("tr-TR", { hour: '2-digit', minute: '2-digit' });
+}
+setInterval(updateCenterTime, 1000); updateCenterTime();
+
+function toggleMenu() {
+    let menu = document.getElementById("menu");
+    menu.style.left = (menu.style.left == "0px") ? "-240px" : "0px";
+}
+
+/* SADECE BURASI GÜNCELLENDİ */
+function loadPage(url) {
+    document.getElementById("content").style.display = "block";
+    document.getElementById("tasksBox").style.display = "none";
+
+    const frame = document.getElementById("frame");
+
+    if (!url.startsWith("file:///")) {
+        frame.src = "file:///android_asset/" + url;
+    } else {
+        frame.src = url;
+    }
+
+    document.getElementById("menu").style.left = "-240px";
+    document.getElementById("backFloat").style.display = "block";
+}
+
+function goHome() {
+    document.getElementById("content").style.display = "none";
+    document.getElementById("tasksBox").style.display = "block";
+    document.getElementById("backFloat").style.display = "none";
+    document.getElementById("frame").src = "";
+}
+
+let sonDokunma = Date.now();
+let ekranKoruyucuAcik = false;
+const SCREEN_TIMEOUT = 60000;
+function kullaniciHareketi() {
+    sonDokunma = Date.now();
+    if (ekranKoruyucuAcik) {
+        ekranKoruyucuAcik = false;
+        document.getElementById("screenSaver").style.display = "none";
+    }
+}
+document.addEventListener("touchstart", kullaniciHareketi);
+document.addEventListener("click", kullaniciHareketi);
+document.addEventListener("mousemove", kullaniciHareketi);
+document.addEventListener("keydown", kullaniciHareketi);
+document.addEventListener("scroll", kullaniciHareketi);
+
+setInterval(() => {
+    if (!ekranKoruyucuAcik && Date.now() - sonDokunma > SCREEN_TIMEOUT) {
+        ekranKoruyucuAcik = true;
+        document.getElementById("screenSaver").style.display = "block";
+    }
+}, 1000);
 </script>
+
 </body>
 </html>

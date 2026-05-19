@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Olay Bildir Pro - Dikmen</title>
+<style>
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 0; color: #333; }
+    .top-bar { height: 60px; background: #0b462a; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .container { max-width: 650px; margin: 20px auto; padding: 20px; background: white; border-radius: 12px; shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 20px; }
+    .settings-btn { font-size: 24px; background: #eee; border: none; cursor: pointer; border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+    .settings-btn:hover { background: #ddd; rotate: 45deg; }
+    label { font-weight: 600; margin: 15px 0 5px; display: block; color: #444; }
+    input, select, textarea { width: 100%; padding: 12px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 15px; transition: 0.2s; }
+    input:focus, select:focus { border-color: #198754; outline: none; box-shadow: 0 0 0 3px rgba(25,135,84,0.1); }
+    textarea { min-height: 100px; resize: vertical; }
+    .row { display: flex; gap: 12px; margin: 25px 0; }
+    button { padding: 14px; font-size: 16px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; transition: 0.2s; flex: 1; }
+    .primary { background: #198754; color: white; }
+    .secondary { background: #0d6efd; color: white; }
+    button:active { transform: scale(0.98); }
+    .output { background: #f9f9f9; padding: 20px; border: 2px dashed #ccc; border-radius: 10px; white-space: pre-wrap; margin-top: 20px; line-height: 1.6; font-family: monospace; }
+    
+    /* Modal Styles */
+    .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px); }
+    .modal-box { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 500px; max-height: 85vh; overflow-y: auto; }
+    .toggle-group { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .switch { position: relative; display: inline-block; width: 45px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background-color: #198754; }
+    input:checked + .slider:before { transform: translateX(21px); }
+</style>
+</head>
+<body>
+
+<div class="top-bar"></div>
+
+<div class="modal" id="ayarlarModal">
+    <div class="modal-box">
+        <span style="float:right; cursor:pointer; font-size:24px;" onclick="kapatModal('ayarlarModal')">&times;</span>
+        <h2>⚙️ Gelişmiş Ayarlar</h2>
+        
+        <h3>Görünürlük Ayarları</h3>
+        <div class="toggle-group">
+            <span>Etap Bilgisini Göster</span>
+            <label class="switch"><input type="checkbox" id="showEtap" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-group">
+            <span>Bölge Bilgisini Göster</span>
+            <label class="switch"><input type="checkbox" id="showBolge" checked><span class="slider"></span></label>
+        </div>
+        <div class="toggle-group">
+            <span>"Rekreasyon Alanı" İfadesini Kullan</span>
+            <label class="switch"><input type="checkbox" id="showRekreasyon" checked><span class="slider"></span></label>
+        </div>
+
+        <h3 style="margin-top:25px;">Metin Düzenleme</h3>
+        <label>Park/Alan İsmi</label>
+        <input id="parkIsmi" type="text">
+
+        <label>Vardiya 1</label>
+        <input id="v1Input" placeholder="08:00 / 20:00">
+        <label>Vardiya 2</label>
+        <input id="v2Input" placeholder="20:00 / 08:00">
+
+        <label>Etap Listesi (Her satıra bir tane)</label>
+        <textarea id="etaplarListe"></textarea>
+
+        <label>Bölge Listesi (Her satıra bir tane)</label>
+        <textarea id="bolgelerListe"></textarea>
+
+        <button class="primary" style="margin-top:20px; width:100%;" onclick="ayarlariKaydet()">Ayarları Uygula</button>
+    </div>
+</div>
+
+<div class="container">
+    <div class="header">
+        <h2 style="margin:0; color:#198754;">Olay Raporu</h2>
+        <button class="settings-btn" onclick="acAyarlar()">⚙️</button>
+    </div>
+
+    <div id="etapContainer">
+        <label>Etap Seçin</label>
+        <select id="etapSelect"></select>
+    </div>
+
+    <label>Konu / Olay Başlığı</label>
+    <input id="konu" placeholder="Örn: Aydınlatma Arızası">
+
+    <label>Vardiya Zamanı</label>
+    <select id="vardiyaSelect"></select>
+
+    <div id="bolgeContainer">
+        <label>Bölge Seçin</label>
+        <select id="bolgeSelect"></select>
+    </div>
+
+    <label>Olay Detayları</label>
+    <textarea id="detay" placeholder="Olayın nasıl gerçekleştiğini kısaca açıklayın..."></textarea>
+
+    <div class="row">
+        <button class="primary" onclick="raporOlustur()">📄 Rapor Hazırla</button>
+        <button class="secondary" onclick="kopyala()">📋 Kopyala</button>
+    </div>
+
+    <div class="output" id="sonuc">Rapor oluşturduğunuzda burada görünecektir...</div>
+</div>
+
+<script>
+// Varsayılan Veriler
+const varsayilanEtaplar = ["ÖVEÇLER VADİSİ 1. ETAP", "ÖVEÇLER VADİSİ 2. ETAP"];
+const varsayilanBolgeler = ["Giriş", "Orta Alan", "Süs Havuzu", "Çocuk Parkı", "Spor Alanı", "Park Geneli"];
+
+function acAyarlar() { document.getElementById("ayarlarModal").style.display = "flex"; }
+function kapatModal(id) { document.getElementById(id).style.display = "none"; }
+
+function ayarlariYukle() {
+    document.getElementById("parkIsmi").value = localStorage.getItem("parkIsmi") || "ÖVEÇLER VADİSİ PARKI";
+    document.getElementById("v1Input").value = localStorage.getItem("v1") || "08:00 / 20:00";
+    document.getElementById("v2Input").value = localStorage.getItem("v2") || "20:00 / 08:00";
+    
+    document.getElementById("etaplarListe").value = JSON.parse(localStorage.getItem("etaplar") || JSON.stringify(varsayilanEtaplar)).join("\n");
+    document.getElementById("bolgelerListe").value = JSON.parse(localStorage.getItem("bolgeler") || JSON.stringify(varsayilanBolgeler)).join("\n");
+    
+    // Görünürlük Checkboxları
+    document.getElementById("showEtap").checked = localStorage.getItem("showEtap") !== "false";
+    document.getElementById("showBolge").checked = localStorage.getItem("showBolge") !== "false";
+    document.getElementById("showRekreasyon").checked = localStorage.getItem("showRekreasyon") !== "false";
+
+    arayuzuGuncelle();
+}
+
+function arayuzuGuncelle() {
+    const etaplar = JSON.parse(localStorage.getItem("etaplar") || JSON.stringify(varsayilanEtaplar));
+    const bolgeler = JSON.parse(localStorage.getItem("bolgeler") || JSON.stringify(varsayilanBolgeler));
+    
+    // Select kutularını doldur
+    const eSelect = document.getElementById("etapSelect");
+    eSelect.innerHTML = "";
+    etaplar.forEach(e => eSelect.add(new Option(e, e)));
+
+    const bSelect = document.getElementById("bolgeSelect");
+    bSelect.innerHTML = "";
+    bolgeler.forEach(b => bSelect.add(new Option(b, b)));
+
+    const vSelect = document.getElementById("vardiyaSelect");
+    vSelect.innerHTML = "";
+    vSelect.add(new Option(document.getElementById("v1Input").value, document.getElementById("v1Input").value));
+    vSelect.add(new Option(document.getElementById("v2Input").value, document.getElementById("v2Input").value));
+
+    // Ana ekrandaki görünürlükleri ayarla
+    document.getElementById("etapContainer").style.display = document.getElementById("showEtap").checked ? "block" : "none";
+    document.getElementById("bolgeContainer").style.display = document.getElementById("showBolge").checked ? "block" : "none";
+}
+
+function ayarlariKaydet() {
+    localStorage.setItem("parkIsmi", document.getElementById("parkIsmi").value);
+    localStorage.setItem("v1", document.getElementById("v1Input").value);
+    localStorage.setItem("v2", document.getElementById("v2Input").value);
+    localStorage.setItem("etaplar", JSON.stringify(document.getElementById("etaplarListe").value.split("\n").filter(x => x.trim())));
+    localStorage.setItem("bolgeler", JSON.stringify(document.getElementById("bolgelerListe").value.split("\n").filter(x => x.trim())));
+    
+    localStorage.setItem("showEtap", document.getElementById("showEtap").checked);
+    localStorage.setItem("showBolge", document.getElementById("showBolge").checked);
+    localStorage.setItem("showRekreasyon", document.getElementById("showRekreasyon").checked);
+
+    arayuzuGuncelle();
+    kapatModal('ayarlarModal');
+    alert("Ayarlar başarıyla kaydedildi!");
+}
+
+function raporOlustur() {
+    const park = localStorage.getItem("parkIsmi");
+    const konu = document.getElementById("konu").value || "Belirtilmedi";
+    const vardiya = document.getElementById("vardiyaSelect").value;
+    const detay = document.getElementById("detay").value || "...";
+    
+    const showEtap = document.getElementById("showEtap").checked;
+    const showBolge = document.getElementById("showBolge").checked;
+    const showRek = document.getElementById("showRekreasyon").checked;
+
+    const etapFull = document.getElementById("etapSelect").value;
+    const etapNo = etapFull.match(/\d+/) ? etapFull.match(/\d+/)[0] + ". Etap" : "";
+    
+    const bolge = document.getElementById("bolgeSelect").value;
+    const bolgeEki = bolge === "Park Geneli" ? "Park genelinde" : `${bolge} bölgesinde`;
+
+    const simdi = new Date();
+    const tarih = simdi.toLocaleDateString('tr-TR');
+    const saat = simdi.toLocaleTimeString('tr-TR', {hour: '2-digit', minute: '2-digit'});
+
+    // Dinamik Metin İnşası
+    let metin = `Çevre -1 Güvenlik Müdürlüğü\n\nDİKMEN BÖLGESİ\n${park}`;
+    
+    if(showEtap) metin += `  ${etapNo.toUpperCase()}`;
+    
+    metin += `\n\nKonu: ${konu}\n\n`;
+    metin += `${tarih} tarihinde, ${vardiya} vardiyasında saat: ${saat}'te `;
+    metin += `${park.replace("PARKI","")}`;
+    
+    if(showRek) metin += ` Rekreasyon Alanı`;
+    if(showEtap) metin += ` ${etapNo}`;
+    if(showBolge) metin += ` ${bolgeEki}`;
+    
+    metin += ` ${detay}\n\nBilgilerinize Müdürüm.`;
+
+    document.getElementById("sonuc").textContent = metin;
+}
+
+function kopyala() {
+    const text = document.getElementById("sonuc").textContent;
+    navigator.clipboard.writeText(text);
+    alert("Kopyalandı!");
+}
+
+window.onload = ayarlariYukle;
+</script>
+
+</body>
+</html>
+

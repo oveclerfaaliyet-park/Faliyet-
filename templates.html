@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Dijital Tutanak Sistemi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{margin:0;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;background:#f2f2f2}
+header{background:#1b5e20;color:white;padding:10px;text-align:center;font-size:20px;position:relative}
+#authStatus{position:absolute;right:10px;top:10px;font-size:12px;background:rgba(255,255,255,0.2);padding:5px 10px;border-radius:5px}
+#authStatus.loggedIn{background:#4caf50}
+#loginBtn{position:absolute;left:10px;top:10px;background:white;color:#1b5e20;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px}
+#logoutBtn{position:absolute;left:10px;top:10px;background:#d32f2f;color:white;border:none;padding:5px 10px;border-radius:5px;cursor:pointer;font-size:12px;display:none}
+#search{width:95%;margin:10px auto;display:block;padding:8px;border-radius:8px;border:1px solid #ccc}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;padding:12px}
+.card{background:white;border-radius:10px;padding:10px;text-align:center;box-shadow:0 3px 8px rgba(0,0,0,0.2);position:relative}
+.card img{width:100%;height:120px;object-fit:cover;border-radius:8px;cursor:pointer}
+.card .delete-btn{position:absolute;top:5px;right:5px;background:#d32f2f;color:white;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:16px;display:none}
+.card .delete-btn:hover{background:#b71c1c}
+.card .edit-btn{position:absolute;top:5px;left:5px;background:#1976d2;color:white;border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:14px;display:none}
+.card .edit-btn:hover{background:#1565c0}
+
+/* Tam Ekran Görüntüleyici */
+#viewer{position:fixed;inset:0;background:black;display:none;flex-direction:column;align-items:center;justify-content:center;z-index:1000}
+#viewer img{max-width:100%;max-height:100%;object-fit:contain}
+#closeBtn{position:absolute;top:20px;right:20px;background:rgba(255,255,255,0.2);color:white;border:none;border-radius:50%;width:50px;height:50px;cursor:pointer;font-size:24px;z-index:1001}
+#closeBtn:hover{background:rgba(255,255,255,0.4)}
+#rotateHint{position:absolute;bottom:20px;color:white;background:rgba(0,0,0,0.7);padding:10px 20px;border-radius:20px;font-size:14px;display:none}
+
+.footer{padding:10px;text-align:center}
+.footer button{margin:5px;padding:8px 12px}
+.section-title{margin:12px; font-size:18px; font-weight:bold; color:#1b5e20; cursor:pointer;}
+.adminBtns{display:none;margin-top:6px}
+.adminBtns button{margin:3px}
+#addBtn{position:fixed;right:20px;bottom:20px;width:60px;height:60px;border-radius:50%;background:#1b5e20;color:white;font-size:36px;border:none;box-shadow:0 4px 12px rgba(0,0,0,0.4);cursor:pointer;display:none}
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.5);display:none;justify-content:center;align-items:center;z-index:2000}
+.modal .box{background:white;padding:20px;border-radius:10px;width:300px}
+.modal .box input{width:100%;margin:5px 0;padding:6px;box-sizing:border-box}
+
+/* Yatay ekran için */
+@media screen and (orientation: landscape) {
+ #viewer img{max-width:100%;max-height:100vh}
+}
+</style>
+</head>
+<body>
+
+<header>
+ <button id="loginBtn" onclick="openLogin()">🔐 Giriş Yap</button>
+ <button id="logoutBtn" onclick="logout()">🚪 Çıkış</button>
+ 📋 Dijital Tutanak
+ <span id="authStatus">👤 Misafir</span>
+</header>
+
+<input id="search" placeholder="Şablon ara..." oninput="render()">
+
+<div class="section-title" onclick="togglePersonelTutanak()">👤 PERSONEL TUTANAKLARI</div>
+<div id="personelTutanak" style="display:none;" class="grid"></div>
+
+<div class="grid" id="list"></div>
+
+<button id="addBtn" onclick="openAddModal()">+</button>
+
+<div class="footer">
+ <button onclick="exportCSV()">📤 CSV Dışa Aktar</button>
+ <input type="file" accept=".csv" onchange="importCSV(this)">
+</div>
+
+<!-- Tam Ekran Görüntüleyici -->
+<div id="viewer" onclick="closeViewer(event)">
+ <button id="closeBtn" onclick="closeViewerBtn(event)">✕</button>
+ <img id="viewImg" onclick="event.stopPropagation()">
+ <div id="rotateHint">📱 Daha iyi görüntü için telefonu yatay çevirin</div>
+</div>
+
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+ <div class="box">
+  <h3>🔐 Yönetici Girişi</h3>
+  <input type="password" id="loginPass" placeholder="Şifre">
+  <button onclick="checkLogin()">Giriş Yap</button>
+  <button onclick="closeLogin()" style="margin-top:5px;background:#666">İptal</button>
+ </div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal" id="editModal">
+ <div class="box">
+  <h3 id="editTitle">Yeni Şablon Ekle</h3>
+  <input id="tName" placeholder="Şablon Adı">
+  <input type="file" id="tImg" accept="image/*">
+  <button onclick="saveTemplate()">Kaydet</button>
+  <button onclick="closeEdit()" style="margin-top:5px;background:#666">İptal</button>
+ </div>
+</div>
+
+<script>
+// Admin şifresi
+const ADMIN_PASS="anfa2026";
+
+// DOM Element referansları
+const search = document.getElementById('search');
+const list = document.getElementById('list');
+const viewer = document.getElementById('viewer');
+const viewImg = document.getElementById('viewImg');
+const loginModal = document.getElementById('loginModal');
+const editModal = document.getElementById('editModal');
+const tName = document.getElementById('tName');
+const tImg = document.getElementById('tImg');
+const loginPass = document.getElementById('loginPass');
+const addBtn = document.getElementById('addBtn');
+const loginBtn = document.getElementById('loginBtn');
+const logoutBtn = document.getElementById('logoutBtn');
+const authStatus = document.getElementById('authStatus');
+const rotateHint = document.getElementById('rotateHint');
+
+// Yetkilendirme durumu
+let isAdmin = sessionStorage.getItem("isAdmin") === "true";
+
+let templates = JSON.parse(localStorage.getItem("templates")) || [
+ {name:"Görev Yeri Terk", img:"gorevyeriterk.jpg"},
+ {name:"Telsiz Duyarsızlık", img:"telsiz.jpg"},
+ {name:"Cep Telefonu", img:"telefon.jpg"},
+ {name:"Yetki Dışı İş", img:"baskaisyapmak.jpg"},
+ {name:"Park Terk", img:"parktek.jpg"},
+ {name:"Yalan Beyan", img:"yalandedikodu.jpg"}
+];
+
+// 22 PERSONEL TUTANAK GÖRSELİ
+let personelTutanaklar = JSON.parse(localStorage.getItem("personelTutanaklar")) || [
+ {img:"amirsefyetersiz.jpg", title:"AMİR ŞEF GÖREVE YETERSİZLİK"},
+ {img:"baskaisyapmak.jpg", title:"GÖREV SIRASINDA BAŞKA İŞ İLE UĞRAŞMAK"},
+ {img:"disiplinsiz.jpg", title:"DİSİPLİNSİZ DAVRANMAK / İŞ SAĞLIĞI VE GÜVENLİĞİ KURALLARINA UYMAMAK"},
+ {img:"gorevyeriterk.jpg", title:"GÖREV YERİNİ TERK"},
+ {img:"gorevegelmemek.jpg", title:"GÖREVE GELMEMEK"},
+ {img:"goreviyetersizyapmak.jpg", title:"GÖREVİ YETERSİZ YAPMAK"},
+ {img:"greviyetersizyapmak.jpg", title:"GREVİ YETERSİZ YAPMAK"},
+ {img:"kilikkiyafet.jpg", title:"KENDİSİNE VERİLEN KIYAFETLERİ UYGUN KULLANMAMAK"},
+ {img:"nobettalimatinauymamak.jpg", title:"NÖBET TALİMATLARINA UYMAMAK"},
+ {img:"parktek.jpg", title:"İŞ SAATİ BİTİMİNDEN ÖNCE GÖREV YERİNİ TERK ETMEK (PARK TERK)"},
+ {img:"sosyalmedya.jpg", title:"SOSYAL MEDYADA ŞİRKET YÖNETİCİLERİ HAKKINDA ASILSIZ VE OLUMSUZ PAYLAŞIM"},
+ {img:"telefon.jpg", title:"TELEFONDA MAKUL SÜRENİN DIŞINDA KONUŞMAK"},
+ {img:"telsiz.jpg", title:"TELSİZE DUYARSIZLIK"},
+ {img:"uygunolmayanistirahat.jpg", title:"İSTİRAHAT SAATİNDE UYGUN OLMAYAN ORTAM OLUŞTURMAK"},
+ {img:"uyumak.jpg", title:"İŞ BAŞINDA / GÖREV BAŞINDA UYUMAK"},
+ {img:"yalandedikodu.jpg", title:"YALAN BEYANDA BULUNMAK / DEDİKODU YAPMAK"},
+ {img:"geckalmak.jpg", title:"İŞE GEÇ KALMAK"},
+ {img:"molaizinsiz.jpg", title:"İZİNSİZ MOLA YAPMAK"},
+ {img:"sigara.jpg", title:"YASAK ALANLARDA SİGARA İÇMEK"},
+ {img:"argoykullanmak.jpg", title:"ARGO VE KABA KONUŞMAK"},
+ {img:"musteritavr.jpg", title:"MÜŞTERİYE KABA DAVRANMAK"},
+ {img:"zimmet.jpg", title:"ZİMMETE PARA GEÇİRMEK"}
+];
+
+let records = JSON.parse(localStorage.getItem("records") || "[]");
+let editIndex=null;
+
+// Sayfa yüklendiğinde yetki kontrolü
+function checkAuth(){
+ if(isAdmin){
+  loginBtn.style.display="none";
+  logoutBtn.style.display="block";
+  addBtn.style.display="block";
+  authStatus.textContent="👑 Admin";
+  authStatus.classList.add("loggedIn");
+ } else {
+  loginBtn.style.display="block";
+  logoutBtn.style.display="none";
+  addBtn.style.display="none";
+  authStatus.textContent="👤 Misafir";
+  authStatus.classList.remove("loggedIn");
+ }
+ render();
+}
+
+// Login fonksiyonları
+function openLogin(){
+ loginModal.style.display="flex";
+ loginPass.value="";
+ loginPass.focus();
+}
+
+function closeLogin(){
+ loginModal.style.display="none";
+}
+
+function checkLogin(){
+ if(loginPass.value===ADMIN_PASS){
+  isAdmin=true;
+  sessionStorage.setItem("isAdmin", "true");
+  closeLogin();
+  checkAuth();
+  alert("✅ Giriş başarılı! Artık admin yetkilerine sahipsiniz.");
+ } else {
+  alert("❌ Şifre yanlış!");
+  loginPass.value="";
+ }
+}
+
+function logout(){
+ if(confirm("Çıkış yapmak istediğinize emin misiniz?")){
+  isAdmin=false;
+  sessionStorage.removeItem("isAdmin");
+  checkAuth();
+ }
+}
+
+// Render şablonlar
+function render(){
+ list.innerHTML="";
+ let q = search.value.toLowerCase();
+ templates.filter(t=>t.name.toLowerCase().includes(q))
+ .forEach((t,i)=>{
+  let adminButtons="";
+  if(isAdmin){
+   adminButtons=`<button class="delete-btn" onclick="deleteTemplate(${i}, event)" title="Şablonu Sil" style="display:block">×</button>
+   <button class="edit-btn" onclick="editTemp(${i}, event)" title="Düzenle" style="display:block">✏️</button>`;
+  }
+  list.innerHTML+=`
+   <div class="card">
+    ${adminButtons}
+    <img src="${t.img}" onclick="openView('${t.img}')">
+    <div>${t.name}</div>
+   </div>`;
+ });
+}
+
+// Personel Tutanakları aç/kapa
+function togglePersonelTutanak(){
+ let container = document.getElementById("personelTutanak");
+ if(container.style.display==="none"){
+   container.style.display="grid";
+   container.innerHTML="";
+   personelTutanaklar.forEach((t, index)=>{
+    let adminButtons="";
+    if(isAdmin){
+     adminButtons=`<button class="delete-btn" onclick="deletePersonelTutanak(${index}, event)" title="Tutanak Görselini Sil" style="display:block">×</button>`;
+    }
+     container.innerHTML+=`
+     <div class="card">
+       ${adminButtons}
+       <img src="${t.img}" onclick="openView('${t.img}')">
+       <div>${t.title}</div>
+     </div>`;
+   });
+ } else {
+   container.style.display="none";
+ }
+}
+
+// Şablon silme fonksiyonu
+function deleteTemplate(index, event){
+ event.stopPropagation();
+ if(!isAdmin){
+  alert("Bu işlem için yetkiniz yok!");
+  return;
+ }
+ if(confirm("'" + templates[index].name + "' şablonunu silmek istediğinize emin misiniz?")){
+   templates.splice(index, 1);
+   localStorage.setItem("templates", JSON.stringify(templates));
+   render();
+ }
+}
+
+// Personel tutanak görseli silme fonksiyonu
+function deletePersonelTutanak(index, event){
+ event.stopPropagation();
+ if(!isAdmin){
+  alert("Bu işlem için yetkiniz yok!");
+  return;
+ }
+ if(confirm("'" + personelTutanaklar[index].title + "' tutanağını silmek istediğinize emin misiniz?")){
+   personelTutanaklar.splice(index, 1);
+   localStorage.setItem("personelTutanaklar", JSON.stringify(personelTutanaklar));
+   togglePersonelTutanak();
+   togglePersonelTutanak();
+ }
+}
+
+// Görüntüleyici fonksiyonları
+function openView(src){
+ viewImg.src=src;
+ viewer.style.display="flex";
+ 
+ // Mobilde yatay çevirme önerisi göster
+ if(window.innerWidth < 768 && window.innerHeight > window.innerWidth){
+  rotateHint.style.display="block";
+  setTimeout(()=>{rotateHint.style.display="none"}, 3000);
+ }
+ 
+ // Yatay ekran kilidi (destekleyen tarayıcılarda)
+ if(screen.orientation && screen.orientation.lock){
+  screen.orientation.lock('landscape').catch(()=>{});
+ }
+}
+
+function closeViewer(e){
+ if(e.target === viewer){
+   closeImageViewer();
+ }
+}
+
+function closeViewerBtn(e){
+ e.stopPropagation();
+ closeImageViewer();
+}
+
+function closeImageViewer(){
+ viewer.style.display="none";
+ viewImg.src="";
+ rotateHint.style.display="none";
+ 
+ // Ekran kilidini kaldır
+ if(screen.orientation && screen.orientation.unlock){
+  screen.orientation.unlock();
+ }
+}
+
+// Admin fonksiyonları
+function openAddModal(){
+ if(!isAdmin){
+  alert("Bu işlem için yetkiniz yok!");
+  return;
+ }
+ editIndex=null;
+ tName.value="";
+ tImg.value="";
+ document.getElementById("editTitle").textContent="Yeni Şablon Ekle";
+ editModal.style.display="flex";
+}
+
+function saveTemplate(){
+ if(!isAdmin){
+  alert("Bu işlem için yetkiniz yok!");
+  return;
+ }
+ const name = tName.value.trim();
+ const file = tImg.files[0];
+ if(!name){ alert("Şablon adı boş"); return; }
+ if(editIndex!==null && !file){
+  templates[editIndex].name = name;
+  localStorage.setItem("templates",JSON.stringify(templates));
+  closeEdit();
+  return;
+ }
+ if(!file){ alert("Resim seçmediniz"); return; }
+ const r = new FileReader();
+ r.onload = function(){
+  const data = {name:name, img:r.result};
+  if(editIndex!==null) templates[editIndex] = data;
+  else templates.push(data);
+  localStorage.setItem("templates",JSON.stringify(templates));
+  closeEdit();
+ };
+ r.readAsDataURL(file);
+}
+
+function closeEdit(){
+ editIndex=null;
+ tName.value="";
+ tImg.value="";
+ editModal.style.display="none";
+ render();
+}
+
+function editTemp(i, event){
+ event.stopPropagation();
+ if(!isAdmin){
+  alert("Bu işlem için yetkiniz yok!");
+  return;
+ }
+ editIndex=i; 
+ tName.value=templates[i].name; 
+ document.getElementById("editTitle").textContent="Şablon Düzenle";
+ editModal.style.display="flex";
+}
+
+// CSV fonksiyonları
+function exportCSV(){
+ if(records.length===0){
+   alert("Dışa aktarılacak kayıt yok");
+   return;
+ }
+ let csv="tarih,saat,personel,md,no,aciklama,sablon\n"; 
+ records.forEach(r=>{
+   csv+=`"${r.tarih}","${r.saat}","${r.personel}","${r.md}",${r.no},"${(r.aciklama||'').replace(/"/g,'""')}","${r.sablon}"\n`;
+ }); 
+ let blob=new Blob([csv],{type:"text/csv;charset=utf-8"}); 
+ let a=document.createElement("a"); 
+ a.href=URL.createObjectURL(blob); 
+ a.download="tutanak_kayitlari.csv"; 
+ a.click();
+}
+
+function importCSV(input){
+ let file=input.files[0];
+ if(!file) return;
+ let r=new FileReader(); 
+ r.onload=function(){
+   let lines=r.result.split("\n").slice(1);
+   let imported=0;
+   lines.forEach(l=>{
+     if(!l.trim()) return;
+     let parts=l.split(",");
+     if(parts.length>=7){
+       let [tarih,saat,personel,md,no,aciklama,sablon]=parts;
+       if(personel){
+         records.push({tarih,saat,personel,md,no,aciklama:aciklama||"",sablon:sablon||""});
+         imported++;
+       }
+     }
+   });
+   localStorage.setItem("records",JSON.stringify(records));
+   alert(imported + " kayıt yüklendi");
+   input.value="";
+ };
+ r.readAsText(file);
+}
+
+// ESC tuşu ile kapatma
+document.addEventListener('keydown', function(e){
+ if(e.key === "Escape" && viewer.style.display === "flex"){
+  closeImageViewer();
+ }
+});
+
+// Sayfa yüklendiğinde yetki kontrolü yap
+window.onload = checkAuth;
+</script>
+</body>
+</html>
+

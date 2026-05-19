@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ANFA REHBER PRO</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root { --primary: #1b5e20; --bg: #f4f7f6; }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; font-family: 'Segoe UI', sans-serif; background: var(--bg); text-transform: uppercase; }
+        .app-container { display: flex; flex-direction: column; height: 100vh; }
+        header { background: var(--primary); color: white; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 1000; }
+        .settings-btn { background: rgba(255,255,255,0.2); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+        .search-wrapper { padding: 10px 15px; background: white; border-bottom: 1px solid #ddd; }
+        #searchBox { width: 100%; padding: 12px 20px; border-radius: 25px; border: 2px solid var(--primary); outline: none; font-size: 16px; }
+        #main-content { flex-grow: 1; overflow-y: auto; padding-bottom: 20px; }
+        .birim-container { margin: 10px 15px; border-radius: 12px; background: white; overflow: hidden; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        .birim-header { background: #e8f5e9; color: var(--primary); padding: 15px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; border-bottom: 1px solid #c8e6c9; }
+        .birim-content { display: none; }
+        .birim-content.active { display: block; }
+        .personel-row { display: flex; align-items: center; padding: 15px; border-bottom: 1px solid #eee; gap: 12px; cursor: pointer; }
+        .avatar { width: 45px; height: 45px; background: var(--primary); color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; flex-shrink: 0; }
+        .personel-actions { display: flex; gap: 10px; margin-left: auto; }
+        .personel-actions i { padding: 8px; cursor: pointer; border-radius: 50%; }
+        .personel-actions .fa-edit { color: var(--primary); background: #e8f5e9; }
+        .personel-actions .fa-trash { color: #b71c1c; background: #ffebee; }
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: flex-end; z-index: 5000; }
+        .sheet { background: white; width: 100%; border-radius: 20px 20px 0 0; padding: 20px; animation: slideUp 0.3s ease; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .act-btn { display: flex; align-items: center; gap: 15px; padding: 15px; background: #f5f5f5; margin-bottom: 8px; border-radius: 12px; font-weight: bold; color: #333; }
+        #settingsPanel, .popup { position: fixed; inset: 0; background: white; z-index: 2000; display: none; flex-direction: column; padding: 20px; overflow-y: auto; }
+        input, textarea, select { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; font-size: 16px; text-transform: uppercase; }
+        .btn-full { width: 100%; padding: 15px; border: none; border-radius: 8px; font-weight: bold; margin-top: 10px; color: white; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        .mgmt-item { display: flex; justify-content: space-between; padding: 12px; background: #f5f5f5; margin-bottom: 5px; border-radius: 8px; align-items: center; }
+        .json-actions { display: flex; gap: 10px; margin: 15px 0; }
+        .json-actions .btn-full { margin-top: 0; flex: 1; }
+        #f_tel { text-transform: none; }
+        .error-msg { color: #b71c1c; font-size: 12px; margin-top: -5px; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body onload="initApp()">
+
+<div class="app-container">
+    <header>
+        <span style="font-weight: bold;">ANFA REHBER PRO</span>
+        <button class="settings-btn" onclick="openSettings()"><i class="fas fa-cog"></i></button>
+    </header>
+    <div class="search-wrapper"><input id="searchBox" placeholder="PERSONEL VEYA BİRİM ARA..." onkeyup="renderRehber()"></div>
+    <div id="main-content"><div id="rehberListesi"></div></div>
+</div>
+
+<div id="actionSheet" class="overlay" onclick="closeActions()">
+    <div class="sheet" onclick="event.stopPropagation()">
+        <h3 id="selectedPersonName" style="text-align: center; color: var(--primary); margin-bottom: 15px;"></h3>
+        <div class="act-btn" onclick="doAction('CALL')"><i class="fas fa-phone" style="color:green"></i> ARA</div>
+        <div class="act-btn" onclick="doAction('WHATSAPP')"><i class="fab fa-whatsapp" style="color:#25D366"></i> WHATSAPP</div>
+        <div class="act-btn" onclick="doAction('SMS')"><i class="fas fa-comment-dots" style="color:#3498db"></i> SMS GÖNDER</div>
+        <div class="act-btn" onclick="doAction('MEIL')"><i class="fas fa-envelope" style="color:orange"></i> MAİL GÖNDER</div>
+        <button class="btn-full" style="background:#777;" onclick="closeActions()">İPTAL</button>
+    </div>
+</div>
+
+<div id="settingsPanel">
+    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px;">
+        <h3 style="margin:0;">REHBER YÖNETİMİ</h3>
+        <span onclick="closeSettings()" style="font-size: 25px; cursor:pointer;"><i class="fas fa-times"></i></span>
+    </div>
+    
+    <div class="json-actions">
+        <button class="btn-full" style="background: #1565c0;" onclick="exportJSON()"><i class="fas fa-download"></i> DIŞA AKTAR</button>
+        <button class="btn-full" style="background: #ef6c00;" onclick="document.getElementById('jsonFileInput').click()"><i class="fas fa-upload"></i> İÇE AKTAR</button>
+    </div>
+    <input type="file" id="jsonFileInput" accept=".json" style="display:none" onchange="importJSON(this)">
+    
+    <button class="btn-full" style="background: var(--primary);" onclick="openForm()">+ YENİ PERSONEL EKLE</button>
+    <h4>BİRİMLER</h4>
+    <div style="display: flex; gap: 5px;"><input id="newUnitName" placeholder="YENİ BİRİM..."><button onclick="addItem('unit')" style="padding:0 15px; background:var(--primary); color:white; border:none; border-radius:8px;">+</button></div>
+    <div id="unitSettingsList"></div>
+    <h4>GÖREVLER</h4>
+    <div style="display: flex; gap: 5px;"><input id="newJobName" placeholder="YENİ GÖREV..."><button onclick="addItem('job')" style="padding:0 15px; background:var(--primary); color:white; border:none; border-radius:8px;">+</button></div>
+    <div id="jobSettingsList"></div>
+    <button class="btn-full" style="background: #b71c1c; margin-top: 30px;" onclick="secureReset()">SİSTEMİ SIFIRLA</button>
+</div>
+
+<div id="formPopup" class="popup">
+    <h3 id="formTitle">PERSONEL KAYDI</h3>
+    <input type="hidden" id="f_id">
+    <label>BİRİM:</label><select id="f_birim"></select>
+    <label>GÖREV:</label><select id="f_gorev"></select>
+    <input id="f_ad_soyad" placeholder="AD SOYAD">
+    <input id="f_tel" type="tel" placeholder="TELEFON (5XXXXXXXXX)" maxlength="11" oninput="formatPhoneInput(this)" onpaste="handlePhonePaste(this, event)">
+    <div id="telError" class="error-msg">GEÇERSİZ NUMARA FORMATI</div>
+    <input id="f_mail" placeholder="E-POSTA" style="text-transform:none">
+    <textarea id="f_not" placeholder="NOTLAR" style="text-transform:none"></textarea>
+    <button class="btn-full" style="background: var(--primary);" onclick="savePersonel()">KAYDET</button>
+    <button class="btn-full" style="background: #777;" onclick="closeForm()">İPTAL</button>
+</div>
+
+<script>
+    let personeller = JSON.parse(localStorage.getItem("anfa_data")) || [];
+    let birimler = JSON.parse(localStorage.getItem("anfa_units")) || ["GENEL MÜDÜRLÜK", "GÜVENLİK", "PARK VE BAHÇELER"];
+    let gorevler = JSON.parse(localStorage.getItem("anfa_jobs")) || ["MÜDÜR", "AMİR", "MEMUR", "ŞEF", "PERSONEL"];
+    let tempPerson = null;
+
+    function initApp() { renderRehber(); renderManagementLists(); }
+
+    function openActionsById(id) {
+        const p = personeller.find(x => x.id === id);
+        if(p) {
+            tempPerson = p; 
+            document.getElementById("selectedPersonName").innerText = p.ad_soyad; 
+            document.getElementById("actionSheet").style.display = "flex"; 
+        }
+    }
+    
+    function closeActions() { 
+        document.getElementById("actionSheet").style.display = "none"; 
+    }
+
+    function doAction(act) {
+        const veri = act + "," + tempPerson.ad_soyad + "," + tempPerson.tel + "," + (tempPerson.mail || "-");
+        if (window.AppInventor) { 
+            window.AppInventor.setWebViewString(veri); 
+        }
+        closeActions();
+    }
+
+    function formatPhoneInput(input) {
+        let val = input.value.replace(/\D/g, '');
+        if (val.length > 10) val = val.substring(0, 10);
+        input.value = val;
+        document.getElementById('telError').style.display = 'none';
+    }
+
+    function handlePhonePaste(input, e) {
+        e.preventDefault();
+        let pasted = (e.clipboardData || window.clipboardData).getData('text');
+        let cleaned = pasted.replace(/\s+/g, '').replace(/[^\d+]/g, '');
+        
+        if (cleaned.startsWith('+90')) {
+            cleaned = cleaned.substring(3);
+        } else if (cleaned.startsWith('90') && cleaned.length > 10) {
+            cleaned = cleaned.substring(2);
+        } else if (cleaned.startsWith('0')) {
+            cleaned = cleaned.substring(1);
+        }
+        
+        cleaned = cleaned.replace(/\D/g, '').substring(0, 10);
+        input.value = cleaned;
+    }
+
+    function renderRehber() {
+        const q = document.getElementById("searchBox").value.toLocaleUpperCase('tr-TR');
+        const list = document.getElementById("rehberListesi");
+        list.innerHTML = "";
+        const gruplar = {};
+        
+        personeller.filter(p => (p.ad_soyad + " " + p.birim + " " + p.gorev).toLocaleUpperCase('tr-TR').includes(q))
+            .forEach(p => { 
+                if(!gruplar[p.birim]) gruplar[p.birim] = []; 
+                gruplar[p.birim].push(p); 
+            });
+        
+        Object.keys(gruplar).sort().forEach(b => {
+            let h = `<div class="birim-container">
+                <div class="birim-header" onclick="toggleBirim(this)">
+                    <span>${b}</span>
+                    <span>${gruplar[b].length} <i class="fas fa-chevron-down"></i></span>
+                </div>
+                <div class="birim-content">`;
+            
+            h += gruplar[b].map(p => `
+                <div class="personel-row" onclick='openActionsById(${p.id})'>
+                    <div class="avatar">${p.ad_soyad[0]}</div>
+                    <div style="flex:1">
+                        <b>${p.ad_soyad}</b><br>
+                        <small>${p.gorev}</small>
+                    </div>
+                    <div class="personel-actions" onclick="event.stopPropagation()">
+                        <i class="fas fa-edit" onclick="editPersonel(${p.id})"></i>
+                        <i class="fas fa-trash" onclick="deletePersonel(${p.id})"></i>
+                    </div>
+                </div>
+            `).join('');
+            
+            list.innerHTML += h + `</div></div>`;
+        });
+    }
+
+    function editPersonel(id) {
+        const p = personeller.find(x => x.id === id);
+        if(!p) return;
+        
+        document.getElementById("f_id").value = p.id;
+        document.getElementById("f_ad_soyad").value = p.ad_soyad;
+        document.getElementById("f_tel").value = p.tel.replace('+90', '');
+        document.getElementById("f_mail").value = p.mail || '';
+        document.getElementById("f_birim").value = p.birim;
+        document.getElementById("f_gorev").value = p.gorev;
+        document.getElementById("formTitle").innerText = "PERSONEL DÜZENLE";
+        document.getElementById("formPopup").style.display = "flex";
+    }
+
+    function deletePersonel(id) {
+        if(!confirm("BU PERSONEL SİLİNSİN Mİ?")) return;
+        personeller = personeller.filter(x => x.id !== id);
+        localStorage.setItem("anfa_data", JSON.stringify(personeller));
+        renderRehber();
+    }
+
+    function savePersonel() {
+        const id = document.getElementById("f_id").value;
+        const isim = document.getElementById("f_ad_soyad").value.trim().toUpperCase();
+        let tel = document.getElementById("f_tel").value.trim().replace(/\D/g, '');
+        
+        if(!isim || !tel) {
+            alert("AD SOYAD VE TELEFON ZORUNLUDUR");
+            return;
+        }
+        
+        if(tel.length !== 10) {
+            document.getElementById('telError').style.display = 'block';
+            return;
+        }
+        
+        tel = '+90' + tel;
+        
+        const pData = { 
+            id: id ? parseInt(id) : Date.now(), 
+            ad_soyad: isim, 
+            tel: tel, 
+            mail: document.getElementById("f_mail").value.trim(), 
+            birim: document.getElementById("f_birim").value, 
+            gorev: document.getElementById("f_gorev").value 
+        };
+        
+        if(id) {
+            const idx = personeller.findIndex(x => x.id === parseInt(id));
+            if(idx !== -1) personeller[idx] = pData;
+        } else {
+            personeller.push(pData);
+        }
+        
+        localStorage.setItem("anfa_data", JSON.stringify(personeller));
+        closeForm(); 
+        renderRehber();
+    }
+
+    function addItem(type) {
+        const inp = document.getElementById(type === 'unit' ? "newUnitName" : "newJobName");
+        const val = inp.value.trim().toUpperCase();
+        if(!val) return;
+        if(type === 'unit') birimler.push(val); 
+        else gorevler.push(val);
+        localStorage.setItem(type === 'unit' ? "anfa_units" : "anfa_jobs", 
+            JSON.stringify(type === 'unit' ? birimler : gorevler));
+        inp.value = ""; 
+        renderManagementLists();
+    }
+
+    function deleteItem(type, val) {
+        if(!confirm("SİLİNSİN Mİ?")) return;
+        if(type === 'unit') birimler = birimler.filter(x => x !== val); 
+        else gorevler = gorevler.filter(x => x !== val);
+        localStorage.setItem(type === 'unit' ? "anfa_units" : "anfa_jobs", 
+            JSON.stringify(type === 'unit' ? birimler : gorevler));
+        renderManagementLists();
+    }
+
+    function renderManagementLists() {
+        document.getElementById("f_birim").innerHTML = birimler.map(b => `<option value="${b}">${b}</option>`).join('');
+        document.getElementById("f_gorev").innerHTML = gorevler.map(g => `<option value="${g}">${g}</option>`).join('');
+        document.getElementById("unitSettingsList").innerHTML = birimler.map(b => `
+            <div class="mgmt-item">
+                <span>${b}</span>
+                <i class="fas fa-trash" style="color:red" onclick="deleteItem('unit','${b}')"></i>
+            </div>
+        `).join('');
+        document.getElementById("jobSettingsList").innerHTML = gorevler.map(g => `
+            <div class="mgmt-item">
+                <span>${g}</span>
+                <i class="fas fa-trash" style="color:red" onclick="deleteItem('job','${g}')"></i>
+            </div>
+        `).join('');
+    }
+
+    function exportJSON() {
+        const data = {
+            personeller: personeller,
+            birimler: birimler,
+            gorevler: gorevler,
+            exportTarihi: new Date().toISOString()
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'anfa_rehber_yedek_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+        URL.revokeObjectURL(url);
+    }
+
+    function importJSON(input) {
+        const file = input.files[0];
+        if(!file) return;
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if(data.personeller) {
+                    personeller = data.personeller;
+                    localStorage.setItem("anfa_data", JSON.stringify(personeller));
+                }
+                if(data.birimler) {
+                    birimler = data.birimler;
+                    localStorage.setItem("anfa_units", JSON.stringify(birimler));
+                }
+                if(data.gorevler) {
+                    gorevler = data.gorevler;
+                    localStorage.setItem("anfa_jobs", JSON.stringify(gorevler));
+                }
+                renderRehber();
+                renderManagementLists();
+                alert("VERİLER BAŞARIYLA YÜKLENDİ");
+            } catch(err) {
+                alert("GEÇERSİZ JSON DOSYASI");
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+
+    function toggleBirim(el) { 
+        el.nextElementSibling.classList.toggle("active"); 
+    }
+    
+    function openSettings() { 
+        document.getElementById("settingsPanel").style.display = "flex"; 
+    }
+    
+    function closeSettings() { 
+        document.getElementById("settingsPanel").style.display = "none"; 
+    }
+    
+    function openForm() { 
+        document.getElementById("f_id").value = '';
+        document.getElementById("f_ad_soyad").value = '';
+        document.getElementById("f_tel").value = '';
+        document.getElementById("f_mail").value = '';
+        document.getElementById("formTitle").innerText = "PERSONEL KAYDI";
+        document.getElementById("formPopup").style.display = "flex"; 
+    }
+    
+    function closeForm() { 
+        document.getElementById("formPopup").style.display = "none"; 
+    }
+    
+    function secureReset() { 
+        const sifre = prompt("SİSTEMİ SIFIRLAMAK İÇİN ŞİFREYİ GİRİN:");
+        if(sifre === "anfa2026") {
+            if(confirm("TÜM VERİLER SİLİNSİN Mİ?")) { 
+                localStorage.clear(); 
+                location.reload(); 
+            }
+        } else if(sifre !== null) {
+            alert("HATALI ŞİFRE!");
+        }
+    }
+</script>
+</body>
+</html>
+

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Alarm Sistemi</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Arial;margin:0;background:#eee;padding:10px}
+h2{text-align:center}
+
+.card{
+ background:white;padding:10px;border-radius:10px;
+ margin-bottom:10px;box-shadow:0 2px 5px rgba(0,0,0,.3)
+}
+
+input{width:100%;padding:6px;margin-bottom:5px}
+button{padding:6px;margin:2px}
+
+.days span{
+ display:inline-block;padding:6px 8px;
+ background:#ccc;margin:2px;border-radius:5px;cursor:pointer
+}
+.days .active{background:#4caf50;color:white}
+
+.alarmOn{border-left:6px solid #4caf50}
+.alarmOff{border-left:6px solid #f44336;opacity:.6}
+
+.topBtn{
+ position:fixed;bottom:20px;right:20px;
+ background:#1e88e5;color:white;
+ font-size:30px;width:50px;height:50px;
+ border-radius:50%;text-align:center;line-height:50px;
+ cursor:pointer
+}
+</style>
+</head>
+<body>
+
+<h2>⏰ Alarmlar</h2>
+
+<div class="card">
+ Saat:
+ <input type="time" id="time">
+ Tarih:
+ <input type="date" id="date">
+
+ Tekrar Günleri:
+ <div class="days" id="days">
+  <span onclick="toggleDay(this,0)">P</span>
+  <span onclick="toggleDay(this,1)">S</span>
+  <span onclick="toggleDay(this,2)">Ç</span>
+  <span onclick="toggleDay(this,3)">P</span>
+  <span onclick="toggleDay(this,4)">C</span>
+  <span onclick="toggleDay(this,5)">C</span>
+  <span onclick="toggleDay(this,6)">P</span>
+ </div>
+
+ <button onclick="addAlarm()">Alarm Ekle</button>
+ <button onclick="toggleAll()">Tümünü Aç/Kapat</button>
+</div>
+
+<div id="list"></div>
+<div class="topBtn" onclick="addAlarm()">＋</div>
+
+<script>
+let alarms = JSON.parse(localStorage.getItem("alarms")||"[]");
+let allOn=true;
+
+function toggleDay(el,i){
+ el.classList.toggle("active");
+ el.dataset.val = el.classList.contains("active")?1:0;
+}
+
+function getDays(){
+ return [...document.querySelectorAll("#days span")]
+        .map(s=>s.dataset.val=="1"?1:0);
+}
+
+function addAlarm(){
+ if(!time.value || !date.value){
+  alert("Saat ve tarih gir");
+  return;
+ }
+
+ alarms.push({
+  time:time.value,
+  date:date.value,
+  days:getDays(),
+  active:true
+ });
+
+ save();
+}
+
+function render(){
+ list.innerHTML="";
+ alarms.forEach((a,i)=>{
+  list.innerHTML+=`
+  <div class="card ${a.active?'alarmOn':'alarmOff'}">
+   <b>${a.time}</b> - ${a.date}<br>
+   Günler: ${a.days.map((v,i)=>v?"P S Ç P C C P".split(" ")[i]:"").join(" ")}<br>
+   Durum: ${a.active?"Açık":"Kapalı"}<br>
+   <button onclick="toggleAlarm(${i})">Aç/Kapat</button>
+   <button onclick="editAlarm(${i})">Düzenle</button>
+   <button onclick="delAlarm(${i})">Sil</button>
+  </div>`;
+ });
+}
+
+function toggleAlarm(i){
+ alarms[i].active=!alarms[i].active;
+ save();
+}
+
+function editAlarm(i){
+ let t=prompt("Saat",alarms[i].time);
+ let d=prompt("Tarih",alarms[i].date);
+ if(t&&d){
+  alarms[i].time=t;
+  alarms[i].date=d;
+  save();
+ }
+}
+
+function delAlarm(i){
+ if(confirm("Silinsin mi?")){
+  alarms.splice(i,1);
+  save();
+ }
+}
+
+function toggleAll(){
+ allOn=!allOn;
+ alarms.forEach(a=>a.active=allOn);
+ save();
+}
+
+function save(){
+ localStorage.setItem("alarms",JSON.stringify(alarms));
+ render();
+ sendToKodular();
+}
+
+/* KODULAR KÖPRÜ */
+function sendToKodular(){
+ if(window.AppInventor){
+  alarms.forEach(a=>{
+   if(a.active){
+    window.AppInventor.setAlarm(a.time,a.date);
+   }
+  });
+ }
+}
+
+render();
+</script>
+</body>
+</html>

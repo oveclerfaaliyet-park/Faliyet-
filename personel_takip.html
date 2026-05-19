@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>PERSONEL SİSTEMİ</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+body{font-family:Segoe UI;background:#f2f2f2;margin:0}
+header{background:#1b5e20;color:white;text-align:center;padding:12px}
+nav{display:flex;justify-content:space-around;background:white;padding:8px}
+button{background:#4caf50;color:white;border:none;padding:8px 14px;border-radius:8px}
+.card{background:white;margin:10px;padding:12px;border-radius:12px}
+input,select{width:100%;padding:6px;margin:4px 0}
+.hidden{display:none}
+.list{padding:6px;border-bottom:1px solid #ccc;cursor:pointer}
+.warn{background:#ff5252;color:white;padding:10px;text-align:center}
+table{width:100%;border-collapse:collapse}
+td,th{border:1px solid #ccc;padding:6px;text-align:left}
+.center{text-align:center}
+img{display:block;margin:50px auto 10px auto;border-radius:12px}
+</style>
+</head>
+<body>
+
+<header>ANFA PERSONEL - DİKMEN</header>
+<div id="uyari"></div>
+
+<nav>
+<button onclick="show('liste')">Liste</button>
+<button onclick="show('ekle')">Ekle</button>
+</nav>
+
+<div id="liste" class="card"></div>
+
+<div id="ekle" class="card hidden">
+<h3>Personel Ekle / Düzenle</h3>
+<input type="hidden" id="editId">
+
+<table>
+<tr><td>Ad Soyad</td><td><input id="ad"></td></tr>
+<tr><td>Telefon</td><td><input id="tel"></td></tr>
+<tr><td>Park</td><td><input id="park"></td></tr>
+<tr><td>İşe Giriş</td><td><input type="date" id="giris"></td></tr>
+<tr><td>Yaka No</td><td><input id="yakaNo"></td></tr>
+<tr><td>Yaka SKT</td><td><input type="date" id="yaka"></td></tr>
+<tr><td>Sendika İzni</td><td><input type="number" id="sendika" value="4"></td></tr>
+<tr><td>Manuel Ek İzin</td><td><input type="number" id="manuel" value="0"></td></tr>
+
+<tr><th colspan="2">Kıyafet</th></tr>
+<tr><td>Mont</td><td><select id="mont"><option>S</option><option>M</option><option>L</option><option>XL</option><option>2XL</option><option>3XL</option><option>4XL</option><option>5XL</option></select></td></tr>
+<tr><td>Pantolon</td><td><select id="pant"></select></td></tr>
+<tr><td>Tişört</td><td><select id="tis"><option>S</option><option>M</option><option>L</option><option>XL</option><option>2XL</option><option>3XL</option><option>4XL</option><option>5XL</option></select></td></tr>
+<tr><td>Ayakkabı</td><td><select id="aya"><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option></select></td></tr>
+<tr><td>Foto</td><td><input type="file" id="foto"></td></tr>
+</table>
+
+<button onclick="kaydet()">Kaydet</button>
+</div>
+
+<script>
+let data = JSON.parse(localStorage.getItem("personel")||"[]");
+for(let i=30;i<=60;i++) pant.innerHTML+=`<option>${i}</option>`;
+
+function show(id){
+ liste.classList.add("hidden");
+ ekle.classList.add("hidden");
+ document.getElementById(id).classList.remove("hidden");
+ if(id=="liste") listele();
+}
+
+function kidemGun(g){
+ let yil=(new Date()-new Date(g))/(1000*60*60*24*365);
+ if(yil<5) return 14;
+ if(yil<10) return 20;
+ return 26;
+}
+
+function autoIzin(p){
+ let now=new Date();
+ let yil=now.getFullYear();
+ if(!p.sonIzinYili) p.sonIzinYili=0;
+ if(!p.sonSendikaYili) p.sonSendikaYili=0;
+
+ let giris=new Date(p.giris);
+ if(now.getDate()==giris.getDate() && now.getMonth()==giris.getMonth()){
+  if(p.sonIzinYili!=yil){
+   p.manuel+=kidemGun(p.giris);
+   p.sonIzinYili=yil;
+  }
+ }
+
+ if(now.getDate()==1 && now.getMonth()==0){
+  if(p.sonSendikaYili!=yil){
+   p.sendika+=4;
+   p.sonSendikaYili=yil;
+  }
+ }
+}
+
+function kaydet(){
+ let img="";
+ if(foto.files[0]){
+  let r=new FileReader();
+  r.onload=()=>tamKayit(r.result);
+  r.readAsDataURL(foto.files[0]);
+ } else tamKayit("");
+}
+
+function tamKayit(img){
+ let id=editId.value||Date.now();
+ let eski=data.find(x=>x.id==id);
+
+ let kisi={
+  id,
+  bolge:"DİKMEN",
+  ad:ad.value,
+  tel:tel.value,
+  park:park.value.toUpperCase(),
+  giris:giris.value,
+  yakaNo:yakaNo.value,
+  yaka:yaka.value,
+  sendika:+sendika.value,
+  manuel:+manuel.value,
+  kullanilan:eski?eski.kullanilan:[],
+  mont:mont.value,
+  pant:pant.value,
+  tis:tis.value,
+  aya:aya.value,
+  resim:img|| (eski?eski.resim:""),
+  sonIzinYili:eski?eski.sonIzinYili:0,
+  sonSendikaYili:eski?eski.sonSendikaYili:0
+ };
+
+ data=data.filter(x=>x.id!=id);
+ data.push(kisi);
+ localStorage.setItem("personel",JSON.stringify(data));
+ alert("Kaydedildi");
+ editId.value="";
+ show("liste");
+}
+
+function kalanGun(t){
+ return Math.floor((new Date(t)-new Date())/(1000*60*60*24));
+}
+
+function listele(){
+ liste.innerHTML="";
+ data.forEach(p=>{
+  autoIzin(p);
+  liste.innerHTML+=`
+  <div class="list" onclick="detay(${p.id})">
+  ${p.ad} - ${p.park}
+  </div>`;
+ });
+ localStorage.setItem("personel",JSON.stringify(data));
+ yakaKontrol();
+}
+
+function detay(id){
+ let p=data.find(x=>x.id==id);
+ let toplam=p.sendika+p.manuel;
+ let kullan=p.kullanilan.reduce((a,b)=>a+b.gun,0);
+ let kalan=toplam-kullan;
+
+ let izinList=p.kullanilan.map(i=>`${i.tarih} - ${i.gun} gün`).join("<br>");
+
+ let h="";
+ if(p.resim) h+=`<img src="${p.resim}" width="140">`;
+ h+=`
+ <div class="center">
+ <b>DİKMEN BÖLGESİ</b><br>${p.park}<br>${p.ad}<br>${p.tel}
+ </div>
+
+ <table>
+ <tr><th>İşe Giriş</th><td>${p.giris}</td></tr>
+ <tr><th>Yaka No</th><td>${p.yakaNo}</td></tr>
+ <tr><th>Yaka SKT</th><td>${p.yaka}</td></tr>
+ <tr><th>Toplam İzin</th><td>${toplam}</td></tr>
+ <tr><th>Kullanılan</th><td>${kullan}</td></tr>
+ <tr><th>Kalan</th><td>${kalan}</td></tr>
+ <tr><th>Mont</th><td>${p.mont}</td></tr>
+ <tr><th>Pantolon</th><td>${p.pant}</td></tr>
+ <tr><th>Tişört</th><td>${p.tis}</td></tr>
+ <tr><th>Ayakkabı</th><td>${p.aya}</td></tr>
+ </table>
+
+ <h4>Kullanılan İzinler</h4>
+ <div>${izinList||"Henüz yok"}</div>
+
+ <h4>Kullanılan İzin Ekle</h4>
+ <input type="date" id="tarih">
+ <input type="number" id="gun">
+ <button onclick="izinEkle(${id})">Ekle</button>
+
+ <h4>İşlem</h4>
+ <button onclick="duzenle(${id})">Düzenle</button>
+ <button style="background:#f44336" onclick="sil(${id})">Sil</button>
+ `;
+ liste.innerHTML=h;
+}
+
+function izinEkle(id){
+ let p=data.find(x=>x.id==id);
+ p.kullanilan.push({tarih:tarih.value,gun:+gun.value});
+ localStorage.setItem("personel",JSON.stringify(data));
+ detay(id);
+}
+
+function duzenle(id){
+ let p=data.find(x=>x.id==id);
+ editId.value=p.id;
+ ad.value=p.ad;
+ tel.value=p.tel;
+ park.value=p.park;
+ giris.value=p.giris;
+ yakaNo.value=p.yakaNo;
+ yaka.value=p.yaka;
+ sendika.value=p.sendika;
+ manuel.value=p.manuel;
+ mont.value=p.mont;
+ pant.value=p.pant;
+ tis.value=p.tis;
+ aya.value=p.aya;
+ show("ekle");
+}
+
+function sil(id){
+ if(confirm("Bu personeli silmek istediğine emin misin?")){
+  if(confirm("Son kez soruyorum. Geri dönüşü yok!")){
+   data=data.filter(x=>x.id!=id);
+   localStorage.setItem("personel",JSON.stringify(data));
+   show("liste");
+  }
+ }
+}
+
+function yakaKontrol(){
+ let u="";
+ data.forEach(p=>{
+  let gun=kalanGun(p.yaka);
+  if(gun<180) u+=`${p.ad} - ${gun} gün<br>`;
+ });
+ uyari.innerHTML = u ? `<div class="warn">${u}</div>` : "";
+}
+</script>
+</body>
+</html>
